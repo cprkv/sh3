@@ -1,0 +1,13 @@
+<repository>
+  <feature name="main">
+    <dependency name="glm" url="https://github.com/g-truc/glm.git" revision="1.0.0" />
+    <dependency name="SDL" url="https://github.com/libsdl-org/SDL.git" revision="release-2.30.0" />
+    <dependency name="meshoptimizer" url="https://github.com/zeux/meshoptimizer.git" revision="v0.20" />
+    <dependency name="nlohmann-json" url="https://github.com/cprkv/nlohmann-json.git" revision="master" />
+    <dependency name="msgpack-c" url="https://github.com/msgpack/msgpack-c.git" revision="cpp-6.1.0" />
+    <dependency name="nvtt" url="https://github.com/cprkv/nvtt.git" revision="master" />
+    <dependency name="DirectXTex" url="https://github.com/cprkv/DirectXTexSimpl.git" revision="master" />
+    <dependency name="shader-generator" url="git@src.vy.ru.net:sh3/shader-generator.git" revision="master" />
+    <dependency name="data" url="git@src.vy.ru.net:sh3/data.git" revision="master" />
+  </feature>
+</repository>

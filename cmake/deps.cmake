@@ -1,18 +1,19 @@
-include(FetchContent)
-
 option(GLM_ENABLE_CXX_20 "Enable C++ 20" ON)
-FetchContent_Declare(
-  glm
-  GIT_REPOSITORY https://github.com/g-truc/glm.git
-  GIT_TAG        1.0.0
-)
+add_subdirectory(${VY_ROOT}/deps/glm glm)
 
 option(SDL_SHARED "Build a shared version of the library" OFF)
 option(SDL2_DISABLE_SDL2MAIN "Disable building/installation of SDL2main" ON)
-FetchContent_Declare(
-  SDL
-  GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
-  GIT_TAG        release-2.30.0
-)
+add_subdirectory(${VY_ROOT}/deps/SDL SDL)
 
-FetchContent_MakeAvailable(glm SDL)
+add_subdirectory(${VY_ROOT}/deps/meshoptimizer meshoptimizer)
+
+add_subdirectory(${VY_ROOT}/deps/nlohmann-json nlohmann-json)
+
+option(MSGPACK_CXX20 "" ON)
+option(MSGPACK_USE_BOOST "" OFF)
+option(MSGPACK_BUILD_DOCS "" OFF)
+add_subdirectory(${VY_ROOT}/deps/msgpack-c msgpack-c)
+
+add_subdirectory(${VY_ROOT}/deps/nvtt nvtt)
+
+add_subdirectory(${VY_ROOT}/deps/DirectXTex DirectXTex)

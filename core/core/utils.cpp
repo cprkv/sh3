@@ -1,14 +1,14 @@
 #include "core/utils.hpp"
-#include <Objbase.h>
 
 
-char* marshalStrDup( const char* string )
+std::optional<std::string> convertWideStringToMultiByte( std::wstring_view input )
 {
-  if( !string )
-    string = "";
+  int length = WideCharToMultiByte( CP_ACP, 0, input.data(), ( int ) input.size(), nullptr, 0, nullptr, nullptr );
+  if( !length ) return std::nullopt;
 
-  size_t size = strlen( string ) + 1;
-  char*  data = static_cast<char*>( CoTaskMemAlloc( size ) );
-  memcpy( data, string, size );
-  return data;
+  auto str = std::string( length, ' ' );
+  length   = WideCharToMultiByte( CP_ACP, 0, input.data(), ( int ) input.size(), str.data(), ( int ) str.size(), nullptr, nullptr );
+  if( !length ) return std::nullopt;
+
+  return str;
 }

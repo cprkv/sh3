@@ -1,3 +1,5 @@
+#pragma once
 #include "core/common.hpp"
 
-char* marshalStrDup( const char* string );
+// TODO: this should go to core/system/utils?
+std::optional<std::string> convertWideStringToMultiByte( std::wstring_view input );
