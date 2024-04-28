@@ -10,13 +10,13 @@ using namespace core;
 
 namespace
 {
-  const Uint32 sSDLInitSubsystems = SDL_INIT_AUDIO |
-                                    SDL_INIT_VIDEO |
-                                    SDL_INIT_JOYSTICK |
-                                    SDL_INIT_GAMECONTROLLER |
-                                    SDL_INIT_EVENTS;
+  constexpr const Uint32 sSDLInitSubsystems = SDL_INIT_AUDIO |
+                                              SDL_INIT_VIDEO |
+                                              SDL_INIT_JOYSTICK |
+                                              SDL_INIT_GAMECONTROLLER |
+                                              SDL_INIT_EVENTS;
 
-  const char* sWindowName = "sh3";
+  constexpr const char* sWindowName = "sh3";
 
   struct StaticData
   {

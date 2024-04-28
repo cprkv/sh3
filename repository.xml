@@ -7,7 +7,10 @@
     <dependency name="msgpack-c" url="https://github.com/msgpack/msgpack-c.git" revision="cpp-6.1.0" />
     <dependency name="nvtt" url="https://github.com/cprkv/nvtt.git" revision="master" />
     <dependency name="DirectXTex" url="https://github.com/cprkv/DirectXTexSimpl.git" revision="master" />
-    <dependency name="shader-generator" url="git@src.vy.ru.net:sh3/shader-generator.git" revision="master" />
+    <dependency name="shader-generator" url="https://github.com/cprkv/hlsl-meta-generator.git" revision="master" />
+
+    <!-- This is my private repo. It contains all game data required to run game. -->
+    <!-- When project will reach alpha stage, I will publish it -->
     <dependency name="data" url="git@src.vy.ru.net:sh3/data.git" revision="master" />
   </feature>
 </repository>
