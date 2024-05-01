@@ -154,8 +154,20 @@ def get_material_info(mat) -> ShMaterialInfo:
   size: List = [color_node.image.size[0], color_node.image.size[1]]
   diffuse: ShTextureInfo = {'path': get_path_info(color_node.image.filepath),
                             'size': size}
+
+  diffuse_usage = None
+  if mat.blend_method == 'OPAQUE':
+    diffuse_usage = SH_DIFFUSE_USAGE_OPAQUE
+  elif mat.blend_method == 'HASHED' or mat.blend_method == 'CLIP':
+    diffuse_usage = SH_DIFFUSE_USAGE_PERFORATING
+  elif mat.blend_method == 'BLEND':
+    diffuse_usage = SH_DIFFUSE_USAGE_TRANSPARENT
+  if diffuse_usage is None:
+    print(f"warn: {mat.name} has no blend method! ({mat.blend_method})")
+
   material_info: ShMaterialInfo = {'name': mat.name,
-                                   'diffuse': diffuse}
+                                   'diffuse': diffuse,
+                                   'diffuse_usage': diffuse_usage}
   return material_info
 
 

@@ -36,10 +36,40 @@ namespace dx = DirectX;
 
 namespace
 {
+  enum class ImageUsage
+  {
+    AlbedoOpaque,
+    AlbedoPerforating,
+    AlbedoTransparent,
+    Normal,
+    Roughness,
+  };
+
+  const char* toString( ImageUsage u )
+  {
+    switch( u )
+    {
+      case ImageUsage::AlbedoOpaque:
+        return "AlbedoOpaque";
+      case ImageUsage::AlbedoPerforating:
+        return "AlbedoPerforating";
+      case ImageUsage::AlbedoTransparent:
+        return "AlbedoTransparent";
+      case ImageUsage::Normal:
+        return "Normal";
+      case ImageUsage::Roughness:
+        return "Roughness";
+      default:
+        return "<unknown>";
+    }
+  }
+
+
   // all intermediate data stored here
   struct TmpTexture
   {
     TextureInfo                 info;
+    ImageUsage                  usage;
     std::string                 intermediatePath;
     core::data::schema::Texture result;
   };
@@ -67,19 +97,10 @@ namespace
   }
 
 
-  enum class ImageUsage
+  void convertToDds( TmpTexture& texture )
   {
-    AlbedoOpaque,
-    AlbedoTransparent,
-    AlbedoPerforating,
-    Normal,
-    Roughness,
-  };
-
-
-  void convertToDds( TmpTexture& texture, ImageUsage usage = ImageUsage::AlbedoOpaque )
-  {
-    printf( "converting texture:\n  %s ->\n  %s\n",
+    printf( "converting texture (%s):\n  %s ->\n  %s\n",
+            toString( texture.usage ),
             texture.info.path.full.c_str(), texture.intermediatePath.c_str() );
 
     nvtt::Surface image;
@@ -89,25 +110,29 @@ namespace
     auto       context            = nvtt::Context{ enableCuda };
     auto       compressionOptions = nvtt::CompressionOptions{};
 
-    if( usage == ImageUsage::AlbedoOpaque )
+    if( texture.usage == ImageUsage::AlbedoOpaque )
     {
-      compressionOptions.setFormat( nvtt::Format_BC1 );
+      compressionOptions.setFormat( nvtt::Format_DXT1 );
       compressionOptions.setQuality( nvtt::Quality_Production );
     }
-    // TODO: separate AlbedoPerforating
-    else if( usage == ImageUsage::AlbedoTransparent || usage == ImageUsage::AlbedoPerforating )
+    else if( texture.usage == ImageUsage::AlbedoPerforating )
     {
-      compressionOptions.setFormat( nvtt::Format_BC1a );
+      compressionOptions.setFormat( nvtt::Format_DXT1a );
       compressionOptions.setQuality( nvtt::Quality_Production );
     }
-    else if( usage == ImageUsage::Normal )
+    else if( texture.usage == ImageUsage::AlbedoTransparent )
+    {
+      compressionOptions.setFormat( nvtt::Format_DXT3 );
+      compressionOptions.setQuality( nvtt::Quality_Production );
+    }
+    else if( texture.usage == ImageUsage::Normal )
     {
       image.setNormalMap( true );
-      compressionOptions.setFormat( nvtt::Format_BC7 );
+      compressionOptions.setFormat( nvtt::Format_BC7 ); // ???
       compressionOptions.setPixelFormat( 7, 7, 7, 0 );
       compressionOptions.setQuality( nvtt::Quality_Normal );
     }
-    else if( usage == ImageUsage::Roughness )
+    else if( texture.usage == ImageUsage::Roughness )
     {
       // TODO: this is just random stuff for fulfill emptiness, need to fix to correct format, like 2 channel image...
       compressionOptions.setFormat( nvtt::Format_BC1 );
@@ -160,6 +185,39 @@ namespace
       image.demultiplyAlpha();
       image.toSrgb();
     }
+  }
+
+
+  ImageUsage convertImageUsage( const std::string& diffuseUsage )
+  {
+    ImageUsage usage = ImageUsage::AlbedoOpaque;
+
+    if( diffuseUsage == SH_DIFFUSE_USAGE_OPAQUE )
+    {
+      usage = ImageUsage::AlbedoOpaque;
+    }
+    else if( diffuseUsage == SH_DIFFUSE_USAGE_PERFORATING )
+    {
+      usage = ImageUsage::AlbedoPerforating;
+    }
+    else if( diffuseUsage == SH_DIFFUSE_USAGE_TRANSPARENT )
+    {
+      usage = ImageUsage::AlbedoTransparent;
+    }
+    else
+    {
+      printf( "unknown diffuse usage: %s\n", diffuseUsage.c_str() );
+      abort();
+    }
+
+    return usage;
+  }
+
+
+  ImageUsage chooseImageUsage( ImageUsage a, ImageUsage b )
+  {
+    using U = std::underlying_type_t<ImageUsage>;
+    return ( ImageUsage ) std::max( ( U ) a, ( U ) b );
   }
 
 
@@ -230,22 +288,28 @@ void intermediate::processMaterials( const SceneInfo&           sceneInfo,
   for( const auto& mesh: sceneInfo.meshes )
   {
     u64 hash = textureHash( mesh.material_info.diffuse );
-    if( auto it = textures.find( hash );
-        it != textures.end() )
+
+    if( auto it = textures.find( hash ); it != textures.end() )
     {
       if( !textureEq( it->second.info, mesh.material_info.diffuse ) )
       {
         printf( "ERROR: different textures has same texture ids\n" );
         abort();
       }
+
+      auto usage       = convertImageUsage( mesh.material_info.diffuse_usage );
+      it->second.usage = chooseImageUsage( it->second.usage, usage );
     }
     else
     {
       auto intermediatePath = getTextureIntermediateOutputPath( mesh.material_info.diffuse );
-      auto tmpTexture       = TmpTexture{
-                .info             = mesh.material_info.diffuse,
-                .intermediatePath = std::move( intermediatePath ),
-                .result           = { .id = hash },
+      auto usage            = convertImageUsage( mesh.material_info.diffuse_usage );
+
+      auto tmpTexture = TmpTexture{
+          .info             = mesh.material_info.diffuse,
+          .usage            = usage,
+          .intermediatePath = std::move( intermediatePath ),
+          .result           = { .id = hash },
       };
       textures.emplace( hash, std::move( tmpTexture ) );
     }

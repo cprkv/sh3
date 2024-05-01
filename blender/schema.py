@@ -16,9 +16,15 @@ class ShTextureInfo(TypedDict):
   size: List
 
 
+SH_DIFFUSE_USAGE_OPAQUE = "Opaque"
+SH_DIFFUSE_USAGE_TRANSPARENT = "Transparent"
+SH_DIFFUSE_USAGE_PERFORATING = "Perforating"
+
+
 class ShMaterialInfo(TypedDict):
   name: str
   diffuse: ShTextureInfo
+  diffuse_usage: str
 
 
 class ShMeshInfo(TypedDict):
