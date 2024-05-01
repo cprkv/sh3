@@ -24,6 +24,7 @@ namespace nlohmann
     static void from_json( const json& j, std::unique_ptr<ShComponent>& p )
     {
       auto type = j.at( "$type" ).get<std::string>();
+
       if( type == "Transform" )
       {
         auto c = std::make_unique<ShComponentTransform>();
@@ -59,12 +60,14 @@ namespace game
 } // namespace game
 
 
-Status game::parseJson( std::string_view input, SceneInfo& output )
+Status game::parseJsonFile( std::string path, SceneInfo& output )
 {
+  auto json = Json();
+  mCoreCheckStatus( core::fs::readFileJson( path, json ) );
+
   try
   {
-    nlohmann::json sceneJson = nlohmann::json::parse( input );
-    output                   = sceneJson.get<SceneInfo>();
+    output = json.get<SceneInfo>();
   }
   catch( const nlohmann::json::exception& ex )
   {

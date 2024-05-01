@@ -3,6 +3,7 @@
 #include "core/render/shader-table.hpp"
 #include "core/render/pass/render-pass.hpp"
 #include "core/data/data.hpp"
+#include "core/math/math.hpp"
 
 using namespace core;
 using namespace core::render;
@@ -34,27 +35,7 @@ namespace
       { .position = { 1, 1 }, .uv = { 1, 0 } },   // top-right     second triangle
       { .position = { 1, -1 }, .uv = { 1, 1 } },  // bottom-left   second triangle
   };
-
-  float cameraMMToFovY( float mm )
-  {
-    float focalLength  = mm * 0.001f;    // in meters
-    float sensorLength = 23.9f * 0.001f; // in meters
-    return 2.0f * atanf( sensorLength / ( 2.0f * focalLength ) );
-  }
 } // namespace
-
-
-Mat4 Camera::getWorldToViewTransform() const
-{
-  return glm::lookAt( position, position + direction, gGlobalUp );
-}
-
-
-Mat4 Camera::getViewToProjectionTransform() const
-{
-  // todo: this needs to be precalculated, not changed every frame
-  return glm::perspective( cameraMMToFovY( focalLength ), aspectRatio, nearPlane, farPlane );
-}
 
 
 void RenderList::addMesh( data::StringId meshId, data::StringId diffuseTextureId )

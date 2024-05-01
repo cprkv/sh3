@@ -14,16 +14,15 @@ RenderPipeline::~RenderPipeline() noexcept
 
   if( state_->reloadOutputMergerTargets )
   {
-    gDevice->context->OMSetRenderTargets( state_->renderTargetViews.size(), state_->renderTargetViews.data(),
+    gDevice->context->OMSetRenderTargets( ( UINT ) state_->renderTargetViews.size(), state_->renderTargetViews.data(),
                                           state_->depthStencil );
     state_->reloadOutputMergerTargets = false;
   }
 
   if( state_->numTexturesFreed )
   {
-    auto srv = decltype( state_->textureBuffers )( state_->numTexturesFreed );
-    srv.fill( nullptr );
-    gDevice->context->PSSetShaderResources( state_->textureBuffers.size(), srv.size(), srv.data() );
+    auto srv = decltype( state_->textureBuffers )( state_->numTexturesFreed, nullptr );
+    gDevice->context->PSSetShaderResources( ( UINT ) state_->textureBuffers.size(), ( UINT ) srv.size(), srv.data() );
     state_->numTexturesFreed = 0;
   }
 
@@ -220,21 +219,21 @@ void RenderPipeline::draw()
   gDevice->context->IASetPrimitiveTopology( state_->primitiveTopology );
 
   if( !state_->vertexConstants.empty() )
-    gDevice->context->VSSetConstantBuffers( 0, state_->vertexConstants.size(), state_->vertexConstants.data() );
+    gDevice->context->VSSetConstantBuffers( 0, ( UINT ) state_->vertexConstants.size(), state_->vertexConstants.data() );
 
   if( !state_->pixelConstants.empty() )
-    gDevice->context->PSSetConstantBuffers( 0, state_->pixelConstants.size(), state_->pixelConstants.data() );
+    gDevice->context->PSSetConstantBuffers( 0, ( UINT ) state_->pixelConstants.size(), state_->pixelConstants.data() );
 
   if( !state_->textureBuffers.empty() )
-    gDevice->context->PSSetShaderResources( 0, state_->textureBuffers.size(), state_->textureBuffers.data() );
+    gDevice->context->PSSetShaderResources( 0, ( UINT ) state_->textureBuffers.size(), state_->textureBuffers.data() );
 
   if( !state_->samplerStates.empty() )
-    gDevice->context->PSSetSamplers( 0, state_->samplerStates.size(), state_->samplerStates.data() );
+    gDevice->context->PSSetSamplers( 0, ( UINT ) state_->samplerStates.size(), state_->samplerStates.data() );
 
   if( state_->depthStencilState )
     gDevice->context->OMSetDepthStencilState( state_->depthStencilState, 0u );
 
-  gDevice->context->OMSetRenderTargets( state_->renderTargetViews.size(), state_->renderTargetViews.data(),
+  gDevice->context->OMSetRenderTargets( ( UINT ) state_->renderTargetViews.size(), state_->renderTargetViews.data(),
                                         state_->depthStencil );
 
   auto dxViewport = D3D11_VIEWPORT{

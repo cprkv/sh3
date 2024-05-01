@@ -272,7 +272,7 @@ Status VertexShader::init( ArrayBytesView bytes, VertexShaderLayout layout )
 {
   constexpr size_t gDescCapacity = 16;
 
-  if( layout.getSize() > gDescCapacity )
+  if( layout.size() > gDescCapacity )
   {
     core::setErrorDetails( "VertexShaderLayout is too big" );
     return StatusBufferOverflow;

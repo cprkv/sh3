@@ -1,5 +1,5 @@
 $repositoryRoot = "$PSScriptRoot/.."
-$generate = "$repositoryRoot/deps/shader-generator/generate.js"
+$generate = "$repositoryRoot/deps/hlsl-meta-generator/generate.js"
 
 $version = "5.0"
 $namespace = "core::render::shaders"

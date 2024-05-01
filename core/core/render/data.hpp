@@ -4,14 +4,6 @@
 
 namespace core::render
 {
-  //static constexpr glm::vec3 gGlobalForward = { 0, 0, 1 };
-  //static constexpr glm::vec3 gGlobalRight   = { 1, 0, 0 };
-  //static constexpr glm::vec3 gGlobalUp      = { 0, 1, 0 };
-
-  static constexpr glm::vec3 gGlobalForward = { 0, 1, 0 };
-  static constexpr glm::vec3 gGlobalRight   = { 1, 0, 0 };
-  static constexpr glm::vec3 gGlobalUp      = { 0, 0, 1 };
-
   struct Texture
   {
     gapi::Texture texture;

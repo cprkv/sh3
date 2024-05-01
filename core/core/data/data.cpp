@@ -46,6 +46,7 @@ namespace
     }
   };
 
+
   struct StaticData
   {
     stdfs::path dataDirectory;
@@ -58,130 +59,28 @@ namespace
   StaticData* sData = nullptr;
 
 
-  enum FileDetectionStatus
-  {
-    FileDetectionStatusFound,
-    FileDetectionStatusNotFound,
-    FileDetectionStatusError,
-  };
-
-  enum FsEntryType
-  {
-    FsEntryTypeFile,
-    FsEntryTypeDirectory,
-  };
-
-
-  FileDetectionStatus hasFsEntry( const stdfs::path& filePath, FsEntryType entryType )
-  {
-    auto ec = std::error_code();
-
-    auto entry = stdfs::directory_entry( filePath, ec );
-    if( ec )
-      return FileDetectionStatusError;
-
-    auto exists = entry.exists( ec );
-    if( ec )
-    {
-      if( ec == std::errc::no_such_file_or_directory )
-        return FileDetectionStatusNotFound;
-
-      core::setErrorDetails( "error directory entry info error: %s", ec.message().c_str() );
-      return FileDetectionStatusError;
-    }
-
-    if( !exists )
-      return FileDetectionStatusNotFound;
-
-    bool isRequiredEntryType = entryType == FsEntryTypeFile ? entry.is_regular_file( ec )
-                                                            : entry.is_directory( ec );
-    if( ec )
-    {
-      core::setErrorDetails( "error directory entry info error: %s", ec.message().c_str() );
-      return FileDetectionStatusError;
-    }
-
-    return isRequiredEntryType ? FileDetectionStatusFound
-                               : FileDetectionStatusNotFound;
-  }
-
-
-  Status findProjectConfig( stdfs::path& out )
-  {
-    char exePathData[MAX_PATH];
-    if( !GetModuleFileNameA( nullptr, exePathData, sizeof( exePathData ) ) )
-    {
-      core::setErrorDetails( "error getting process name" );
-      return StatusSystemError;
-    }
-
-    const auto projectConfigName = stdfs::path( "project-config.json" );
-
-    auto currentDir = stdfs::path( exePathData ).parent_path();
-    int  depth      = 8;
-
-    for( ;; )
-    {
-      auto currentFilePath = currentDir / projectConfigName;
-      auto fileStatus      = hasFsEntry( currentFilePath, FsEntryTypeFile );
-
-      if( fileStatus == FileDetectionStatusFound )
-      {
-        out = currentFilePath;
-        return StatusOk;
-      }
-
-      if( fileStatus == FileDetectionStatusError )
-      {
-        return StatusSystemError;
-      }
-
-      currentDir = currentDir.parent_path();
-      depth--;
-      if( depth == 0 )
-      {
-        core::setErrorDetails( "project config not found: depth exceeded" );
-        return StatusSystemError;
-      }
-    }
-
-    return StatusNotFound;
-  }
-
-
   Status parseProjectConfig()
   {
+    auto exeDirectory = stdfs::path();
+    mCoreCheckStatus( system::getExeDirectory( exeDirectory ) );
+
     auto projectConfigPath = stdfs::path();
-    mCoreCheckStatus( findProjectConfig( projectConfigPath ) );
+    mCoreCheckStatus( fs::findFileUp( exeDirectory, "project-config.json", projectConfigPath ) );
+    mCoreLog( "projectConfigPath: %s\n", projectConfigPath.string().c_str() );
 
-    auto projectConfigData = std::vector<byte>();
-    mCoreCheckStatus( fs::readFile( projectConfigPath.generic_string().c_str(), projectConfigData ) );
-
-    auto projectConfigStr = std::string_view(
-        reinterpret_cast<const char*>( projectConfigData.data() ),
-        projectConfigData.size() );
-
-    const bool allowExceptions = false;
-    const bool ignoreComments  = true;
-
-    auto object = nlohmann::json::parse( projectConfigStr, nullptr,
-                                         allowExceptions, ignoreComments );
-    if( object.type() == nlohmann::json::value_t::discarded )
-    {
-      core::setErrorDetails( "can't parse project config json file" );
-      return StatusBadFile;
-    }
+    auto object = Json();
+    mCoreCheckStatus( fs::readFileJson( projectConfigPath.string(), object ) );
 
     // TODO: may be separate object and parse methods?
     std::string gameData;
     object.at( "gameData" ).get_to( gameData );
     sData->dataDirectory = projectConfigPath.parent_path() / gameData;
 
-    if( auto fileStatus = hasFsEntry( sData->dataDirectory, FsEntryTypeDirectory );
-        fileStatus != FileDetectionStatusFound )
+    auto entryInfo = fs::EntryInfo();
+    if( auto status = fs::getEntryInfo( sData->dataDirectory, entryInfo );
+        status != StatusOk || entryInfo.type != fs::FsEntryTypeDirectory )
     {
-      if( fileStatus == FileDetectionStatusNotFound )
-        core::setErrorDetails( "path to data directory is invalid" );
+      core::setErrorDetails( "path to data directory is invalid" );
       return StatusNotFound;
     }
 
@@ -342,13 +241,9 @@ Status data::unloadRenderChunk( const char* name )
 }
 
 
-std::string data::getDataPath( const char* resourceName )
+std::string data::getDataPath( const stdfs::path& resourceName )
 {
-  return ( resourceName == nullptr
-               ? sData->dataDirectory
-               : sData->dataDirectory / resourceName )
-      .generic_string()
-      .c_str();
+  return ( sData->dataDirectory / resourceName ).string();
 }
 
 

@@ -11,7 +11,8 @@ namespace core::render
 
 namespace core::data
 {
-  std::string getDataPath( const char* resourceName );
+  std::string        getDataPath( const stdfs::path& resourceName );
+  inline std::string getDataPath( const char* resourceName ) { return getDataPath( stdfs::path( resourceName ) ); }
 
   Status initialize();
   void   destroy();

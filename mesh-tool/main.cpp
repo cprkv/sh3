@@ -14,9 +14,22 @@ namespace
                     core::data::schema::Chunk&    chunk )
   {
 #if 1
-    size_t      indexCount           = meshInfo.vertex_data.size();
-    size_t      unindexedVertexCount = meshInfo.vertex_data.size();
+    size_t indexCount           = meshInfo.vertex_data.size();
+    size_t unindexedVertexCount = meshInfo.vertex_data.size();
+
+#  if 0 
     const auto& unindexedVertices    = meshInfo.vertex_data;
+#  else
+    // change order of vertices (from opengl to directx)
+    assert( meshInfo.vertex_data.size() % 3 == 0 );
+    auto unindexedVertices = std::vector<core::data::schema::VertexData>( meshInfo.vertex_data.size() );
+    for( size_t i = 0; i < meshInfo.vertex_data.size(); i += 3 )
+    {
+      unindexedVertices[0 + i] = meshInfo.vertex_data[0 + i];
+      unindexedVertices[1 + i] = meshInfo.vertex_data[2 + i];
+      unindexedVertices[2 + i] = meshInfo.vertex_data[1 + i];
+    }
+#  endif
 
     auto   remap       = std::vector<u32>( indexCount );
     size_t vertexCount = meshopt_generateVertexRemap(

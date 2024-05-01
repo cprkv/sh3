@@ -50,5 +50,5 @@ namespace game
   };
 
 
-  Status parseJson( std::string_view input, SceneInfo& output );
+  Status parseJsonFile( std::string path, SceneInfo& output );
 } // namespace game

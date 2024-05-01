@@ -28,23 +28,8 @@ void game::tasks::loadScene( const std::string& name, std::vector<SceneEntity>& 
 
 
   core::loopEnqueueTask( [sceneJsonPath, loadSceneInfoTask]() mutable {
-    std::vector<u8> sceneJsonBytes;
-    if( auto s = core::fs::readFile( sceneJsonPath, sceneJsonBytes ); s != StatusOk )
-    {
-      auto currentPath = stdfs::current_path().string();
-      mCoreLogError( "error loading scene: can't read scene json file\ncurrent path was: %s\n", currentPath.c_str() );
-      core::loopEnqueueDefferedTask( [loadSceneInfoTask = std::move( loadSceneInfoTask )]() {
-        loadSceneInfoTask->status = StatusSystemError;
-      } );
-      return;
-    }
-
-    auto sceneJsonString = std::string_view{
-        reinterpret_cast<const char*>( sceneJsonBytes.data() ),
-        reinterpret_cast<const char*>( sceneJsonBytes.data() ) + sceneJsonBytes.size() };
-
-    SceneInfo sceneInfo;
-    if( auto s = parseJson( sceneJsonString, sceneInfo ); s != StatusOk )
+    auto sceneInfo = SceneInfo();
+    if( auto s = parseJsonFile( sceneJsonPath, sceneInfo ); s != StatusOk )
     {
       core::loopEnqueueDefferedTask( [loadSceneInfoTask = std::move( loadSceneInfoTask )]() {
         loadSceneInfoTask->status = StatusSystemError;

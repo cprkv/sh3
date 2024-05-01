@@ -8,20 +8,6 @@
 
 namespace core::render
 {
-  struct Camera
-  {
-    Vec3 position    = { 0, 0, 0 };
-    Vec3 direction   = { 0, 0, 1 }; // on 1 meter circle
-    f32  focalLength = 35;          // in millimeters
-    f32  aspectRatio = 16.f / 9.f;
-    f32  nearPlane   = 0.05f;
-    f32  farPlane    = 1000.f;
-
-    Mat4 getWorldToViewTransform() const;
-    Mat4 getViewToProjectionTransform() const;
-  };
-
-
   class RenderList
   {
   public:

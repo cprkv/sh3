@@ -44,7 +44,8 @@ namespace
   {
     SceneCollection sceneCollection_;
 
-    Vec3 camDirection = { 0, 1, 0 };
+    core::math::SphereStraightRotation rotation_;
+    Vec3                               position_ = { 0, 0, 0 };
 
     // TODO: may be load here some basic resources
     Status init() override { return StatusOk; }
@@ -52,32 +53,59 @@ namespace
     void update() override
     {
       {
-        f32 diff = core::loopGetDeltaTime().getMsF() * 0.001f;
-
         using namespace core::input;
 
-        auto changeOnKey = [diff]( f32& v, Key a, Key b ) {
-          if( isKeyPressed( a ) )
-            v += diff;
-          else if( isKeyPressed( b ) )
-            v -= diff;
-        };
+        // rotation
+        {
+          auto delta = Vec2( 0 );
 
-        changeOnKey( camDirection.x, KeyQ, KeyA );
-        changeOnKey( camDirection.y, KeyW, KeyS );
-        changeOnKey( camDirection.z, KeyE, KeyD );
+          if( isKeyPressed( KeyUp ) && !isKeyPressed( KeyDown ) )
+            delta.y = 1;
+          else if( !isKeyPressed( KeyUp ) && isKeyPressed( KeyDown ) )
+            delta.y = -1;
 
-        camDirection = glm::normalize( camDirection );
-        mCoreLog( "camDirection: " mFmtVec3 "\n", mFmtVec3Value( camDirection ) );
+          if( isKeyPressed( KeyLeft ) && !isKeyPressed( KeyRight ) )
+            delta.x = -1;
+          else if( !isKeyPressed( KeyLeft ) && isKeyPressed( KeyRight ) )
+            delta.x = 1;
+
+          f32 rotateFactor = core::loopGetDeltaTime().getMsF() * 0.002f;
+          delta *= rotateFactor;
+       
+          // TODO: this is messed up: delta.x should be positive...
+          rotation_.rotate( -delta.x, delta.y );
+        }
+
+        // translation
+        {
+          f32 deltaForward = 0;
+          f32 deltaRight   = 0;
+
+          if( isKeyPressed( KeyA ) && !isKeyPressed( KeyD ) )
+            deltaRight = -1;
+          else if( !isKeyPressed( KeyA ) && isKeyPressed( KeyD ) )
+            deltaRight = 1;
+
+          if( isKeyPressed( KeyW ) && !isKeyPressed( KeyS ) )
+            deltaForward = 1;
+          else if( !isKeyPressed( KeyW ) && isKeyPressed( KeyS ) )
+            deltaForward = -1;
+
+          f32 moveFactor = core::loopGetDeltaTime().getMsF() * 0.01f;
+          position_ += deltaForward * moveFactor * rotation_.getForward();
+
+          // TODO: this is messed up: KeyA should add positive to deltaRight but it moves left...
+          position_ += deltaRight * moveFactor * rotation_.getRight();
+        }
       }
 
       core::render::RenderList renderList;
 
-      core::render::Camera camera;
+      core::math::Camera camera;
       camera.aspectRatio = core::render::gapi::gDevice->viewport.fSize.x /
                            core::render::gapi::gDevice->viewport.fSize.y;
-      camera.position  = { 1, 0, -3 };
-      camera.direction = camDirection;
+      camera.position  = position_;
+      camera.direction = rotation_.getForward();
 
       renderList.viewPosition              = camera.position;
       renderList.viewToProjectionTransform = camera.getViewToProjectionTransform();

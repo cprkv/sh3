@@ -125,3 +125,106 @@ Status fs::readFile( const char* path, std::vector<u8>& out )
   out.resize( f.getSize() );
   return f.read( out.data(), out.size() );
 }
+
+
+Status fs::getEntryInfo( const stdfs::path& path, EntryInfo& out )
+{
+  auto ec = std::error_code();
+
+  auto entry = stdfs::directory_entry( path, ec );
+  if( ec )
+  {
+    core::setErrorDetails( "getEntryInfo: init entry: %s", ec.message().c_str() );
+    return StatusSystemError;
+  }
+
+  auto status = entry.status( ec );
+  if( ec )
+  {
+    if( ec == std::errc::no_such_file_or_directory )
+    {
+      return StatusNotFound;
+    }
+
+    core::setErrorDetails( "getEntryInfo: check status: %s", ec.message().c_str() );
+    return StatusSystemError;
+  }
+
+  if( status.type() == stdfs::file_type::not_found ||
+      status.type() == stdfs::file_type::none )
+  {
+    return StatusNotFound;
+  }
+
+  switch( status.type() )
+  {
+    case stdfs::file_type::regular:
+      out.type = FsEntryTypeFile;
+      break;
+    case stdfs::file_type::directory:
+      out.type = FsEntryTypeDirectory;
+      break;
+    default:
+      core::setErrorDetails( "getEntryInfo: not a file or directory" );
+      return StatusSystemError;
+  }
+
+  return StatusOk;
+}
+
+
+Status fs::findFileUp( const stdfs::path& baseDirectory, const stdfs::path& fileName, stdfs::path& out )
+{
+  auto currentDir = baseDirectory;
+  int  depth      = 8;
+
+  for( ;; )
+  {
+    auto currentFilePath = currentDir / fileName;
+
+    auto entryInfo = fs::EntryInfo();
+    auto status    = fs::getEntryInfo( currentFilePath, entryInfo );
+
+    if( status == StatusSystemError )
+      return StatusSystemError;
+
+    if( status == StatusOk && entryInfo.type == fs::FsEntryTypeFile )
+    {
+      out = currentFilePath;
+      return StatusOk;
+    }
+
+    currentDir = currentDir.parent_path();
+    depth--;
+    if( depth == 0 )
+    {
+      core::setErrorDetails( "project config not found: depth exceeded" );
+      return StatusSystemError;
+    }
+  }
+
+  return StatusNotFound;
+}
+
+
+Status fs::readFileJson( const char* path, Json& out )
+{
+  mCoreLog( "loading json at %s\n", path );
+
+  auto bytes = std::vector<byte>();
+  mCoreCheckStatus( fs::readFile( path, bytes ) );
+
+  auto jsonString = std::string_view( reinterpret_cast<const char*>( bytes.data() ), bytes.size() );
+
+  const bool allowExceptions = false;
+  const bool ignoreComments  = true;
+
+  out = Json::parse( jsonString, nullptr, allowExceptions, ignoreComments );
+  if( out.type() == Json::value_t::discarded )
+  {
+    core::setErrorDetails( "can't parse json file" );
+    return StatusBadFile;
+  }
+
+  return StatusOk;
+}

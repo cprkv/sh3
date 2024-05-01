@@ -6,4 +6,6 @@
 namespace core::system
 {
   [[noreturn]] void fatalError( const char* fmt, ... );
+  Status            getExeDirectory( stdfs::path& out );
+
 } // namespace core::system

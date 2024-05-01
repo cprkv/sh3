@@ -53,7 +53,7 @@ namespace
     bool oldState = sData->keyModState[mod];
     if( oldState != newState )
     {
-      mCoreLog( "key mod change state: %s (%d->%d)\n", keyModToString( mod ), ( int ) oldState, ( int ) newState );
+      mCoreLogDebug( "key mod change state: %s (%d->%d)\n", keyModToString( mod ), ( int ) oldState, ( int ) newState );
       sData->keyModState[mod] = newState;
     }
   }
@@ -103,8 +103,8 @@ void input::handle( SDL_Event& e )
     bool newState = ( e.type == SDL_KEYDOWN );
     if( newState != oldState )
     {
-      mCoreLog( "key change state: %s (%d->%d)\n", SDL_GetKeyName( e.key.keysym.sym ),
-                ( int ) oldState, ( int ) newState );
+      mCoreLogDebug( "key change state: %s (%d->%d)\n", SDL_GetKeyName( e.key.keysym.sym ),
+                     ( int ) oldState, ( int ) newState );
       sData->keyState[k] = newState;
     }
   }

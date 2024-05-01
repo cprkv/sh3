@@ -45,8 +45,18 @@
 #include <cassert>
 #include <cstdarg>
 
-#define mCoreLog( ... ) fprintf( stdout, "[core] " __VA_ARGS__ )
-#define mCoreLogError( ... ) fprintf( stderr, "[core][error] " __VA_ARGS__ )
+// TODO: check if fmt::printf or std::print is better
+#define mCoreLogExtraDebug 0
+
+#if mCoreLogExtraDebug
+#  define mCoreLog( ... ) fprintf( stdout, "[core][info] (" __FUNCTION__ ") " __VA_ARGS__ )
+#  define mCoreLogError( ... ) fprintf( stderr, "[core][error] (" __FUNCTION__ ") " __VA_ARGS__ )
+#  define mCoreLogDebug( ... ) fprintf( stdout, "[core][debug] (" __FUNCTION__ ") " __VA_ARGS__ )
+#else
+#  define mCoreLog( ... ) fprintf( stdout, "[core][info] " __VA_ARGS__ )
+#  define mCoreLogError( ... ) fprintf( stderr, "[core][error] " __VA_ARGS__ )
+#  define mCoreLogDebug( ... )
+#endif
 
 #define mCoreCheckStatus( ... )                          \
   if( auto s = __VA_ARGS__; s != StatusOk ) [[unlikely]] \
@@ -63,6 +73,9 @@
 
 #define mFmtVec3 "(%02.3f %02.3f %02.3f)"
 #define mFmtVec3Value( a ) a.x, a.y, a.z
+
+#define mFmtVec2 "(%02.3f %02.3f)"
+#define mFmtVec2Value( a ) a.x, a.y
 
 #define mFmtMat4 "(%02.3f %02.3f %02.3f %02.3f\n" \
                  " %02.3f %02.3f %02.3f %02.3f\n" \
@@ -108,6 +121,8 @@ using Mat4 = glm::mat4;
 using Mat3 = glm::mat3;
 
 using Quat = glm::fquat;
+
+using Json = nlohmann::json;
 
 enum Status
 {
@@ -204,84 +219,7 @@ constexpr auto makeArrayBytesView( T& container ) noexcept
 
 
 template<typename T>
-class ArrayView
-{
-  T*    data_;
-  usize size_;
-
-public:
-  using value_type = T;
-
-  constexpr explicit ArrayView( std::span<T> span ) noexcept
-      : data_( span.data() )
-      , size_( span.size() )
-  {}
-
-  constexpr ArrayView( T* data, usize size ) noexcept
-      : data_( data )
-      , size_( size )
-  {}
-
-  constexpr ArrayView( const ArrayView& )                = default;
-  constexpr ArrayView( ArrayView&& ) noexcept            = default;
-  constexpr ArrayView& operator=( const ArrayView& )     = default;
-  constexpr ArrayView& operator=( ArrayView&& ) noexcept = default;
-  constexpr ~ArrayView()                                 = default;
-
-  constexpr T* begin() noexcept { return data_; }
-  constexpr T* begin() const noexcept { return data_; }
-
-  constexpr T* end() noexcept { return data_ + size_; }
-  constexpr T* end() const noexcept { return data_ + size_; }
-
-  constexpr T*       getData() noexcept { return data_; }
-  constexpr const T* getData() const noexcept { return data_; }
-
-  constexpr T&       operator[]( usize i ) noexcept { return data_[i]; }
-  constexpr const T& operator[]( usize i ) const noexcept { return data_[i]; }
-
-  constexpr usize getSize() const noexcept { return size_; }
-  constexpr usize getElementSize() const noexcept { return sizeof( T ); }
-
-  template<typename TArr>
-  static constexpr ArrayView from( TArr* arr, usize size ) noexcept
-  {
-    return { arr, size };
-  }
-
-  template<size_t Size>
-  static constexpr ArrayView fromArray( T ( &arr )[Size] ) noexcept
-  {
-    return { arr, Size };
-  }
-
-  template<typename TContainer>
-  static constexpr ArrayView fromContainer( TContainer& container ) noexcept
-  {
-    return { container.data(), container.size() };
-  }
-};
-
-
-template<typename T>
-constexpr auto makeArrayView( T* array, usize size ) noexcept
-{
-  return ArrayView<T>::from( array, size );
-}
-
-
-template<typename T, size_t Size>
-constexpr auto makeArrayView( T ( &arr )[Size] ) noexcept
-{
-  return ArrayView<T>::from_array( arr );
-}
-
-
-template<typename T>
-constexpr auto makeArrayView( T& container ) noexcept
-{
-  return ArrayView<typename T::value_type>::fromContainer( container );
-}
+using ArrayView = std::span<T>;
 
 
 template<class T>
@@ -360,12 +298,7 @@ public:
   }
 
   constexpr reference operator[]( const ptrdiff_t offset ) const { return ptr_[offset]; }
-  constexpr bool      operator==( const ArrayConstIterator& right ) const { return ptr_ == right.ptr_; }
-  constexpr bool      operator!=( const ArrayConstIterator& right ) const { return !( *this == right ); }
-  constexpr bool      operator<( const ArrayConstIterator& right ) const { return ptr_ < right.ptr_; }
-  constexpr bool      operator>( const ArrayConstIterator& right ) const { return right < *this; }
-  constexpr bool      operator<=( const ArrayConstIterator& right ) const { return !( right < *this ); }
-  constexpr bool      operator>=( const ArrayConstIterator& right ) const { return !( *this < right ); }
+  constexpr auto      operator<=>( const ArrayConstIterator& right ) const = default;
 
 private:
   pointer ptr_;
@@ -456,6 +389,8 @@ public:
   {
     return const_cast<reference>( base::operator[]( offset ) );
   }
+
+  constexpr auto operator<=>( const ArrayIterator& right ) const = default;
 };
 
 //-----------------------------------------------------------------------
@@ -486,6 +421,11 @@ public:
 
   explicit StaticVector( u32 size )
       : size_( size )
+  {}
+
+  explicit StaticVector( u32 size, T elem )
+      : elems_{ elem }
+      , size_( size )
   {}
 
   StaticVector( std::initializer_list<T> items )

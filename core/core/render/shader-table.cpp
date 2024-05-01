@@ -15,7 +15,7 @@ namespace
   {
     gapi::VertexShaderItemLayout layout[] = { vertexShaderItemLayouts... };
     mCoreCheckStatus( out.vertexShader.initFromSource(
-        directory.c_str(), vertexSourceName, gapi::VertexShaderLayout::fromArray( layout ) ) );
+        directory.c_str(), vertexSourceName, gapi::VertexShaderLayout( layout ) ) );
     mCoreCheckStatus( out.pixelShader.initFromSource(
         directory.c_str(), pixelSourceName ) );
     return StatusOk;
