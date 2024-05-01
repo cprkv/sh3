@@ -1,9 +1,6 @@
 #pragma once
 
-// ???
 #define GLM_ENABLE_EXPERIMENTAL
-#define GLM_FORCE_LEFT_HANDED
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #define SDL_MAIN_HANDLED
 
 #pragma warning( push )
@@ -71,11 +68,14 @@
 #define mFmtS64 "%" PRId64
 #define mFmtF32 "%f"
 
+#define mFmtVec2 "(%02.3f %02.3f)"
+#define mFmtVec2Value( a ) a.x, a.y
+
 #define mFmtVec3 "(%02.3f %02.3f %02.3f)"
 #define mFmtVec3Value( a ) a.x, a.y, a.z
 
-#define mFmtVec2 "(%02.3f %02.3f)"
-#define mFmtVec2Value( a ) a.x, a.y
+#define mFmtVec4 "(%02.3f %02.3f %02.3f %02.3f)"
+#define mFmtVec4Value( a ) a.x, a.y, a.z, a.w
 
 #define mFmtMat4 "(%02.3f %02.3f %02.3f %02.3f\n" \
                  " %02.3f %02.3f %02.3f %02.3f\n" \

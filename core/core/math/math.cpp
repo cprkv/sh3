@@ -44,12 +44,12 @@ Mat4 Camera::getWorldToViewTransform() const
   auto dxLookTo   = blenderToDirectX3 * ( position + direction );
   auto dxUp       = blenderToDirectX3 * gGlobalUp;
 
-  return glm::lookAt( dxLookFrom, dxLookTo, dxUp ) * blenderToDirectX;
+  return glm::lookAtLH( dxLookFrom, dxLookTo, dxUp ) * blenderToDirectX;
 }
 
 
 Mat4 Camera::getViewToProjectionTransform() const
 {
   // todo: this needs to be precalculated, not changed every frame
-  return glm::perspective( cameraMMToFovY( focalLength ), aspectRatio, nearPlane, farPlane );
+  return glm::perspectiveLH_ZO( cameraMMToFovY( focalLength ), aspectRatio, nearPlane, farPlane );
 }
