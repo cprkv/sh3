@@ -38,7 +38,7 @@ namespace
 } // namespace
 
 
-void RenderList::addMesh( data::StringId meshId, data::StringId diffuseTextureId )
+void RenderList::addMesh( data::StringId meshId, data::StringId diffuseTextureId, Mat4 worldTransform )
 {
   auto* mesh           = data::findMesh( meshId );
   auto* diffuseTexture = data::findTexture( diffuseTextureId );
@@ -55,6 +55,7 @@ void RenderList::addMesh( data::StringId meshId, data::StringId diffuseTextureId
   auto drawable = Drawable{
       .mesh           = mesh,
       .diffuseTexture = diffuseTexture,
+      .worldTransform = worldTransform,
   };
   drawables.push_back( drawable );
 }

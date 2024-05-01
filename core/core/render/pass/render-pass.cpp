@@ -94,9 +94,8 @@ void RenderPass3D::render( RenderList& renderList )
 
     for( auto& drawable: renderList.drawables )
     {
-      auto objectToWorldTransform         = glm::mat4( 1 ); //glm::rotate( -( float ) M_PI / 2.0f, Vec3( 1, 0, 0 ) );
-      vsConstantModel->gModelToWorld      = objectToWorldTransform;
-      vsConstantModel->gWorldInvTranspose = glm::inverseTranspose( objectToWorldTransform );
+      vsConstantModel->gModelToWorld      = drawable.worldTransform;
+      vsConstantModel->gWorldInvTranspose = glm::inverseTranspose( vsConstantModel->gModelToWorld );
       if( vsConstantModel.update() != StatusOk )
       {
         mCoreLog( "update constant failed" );

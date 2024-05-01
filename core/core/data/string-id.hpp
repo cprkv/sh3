@@ -35,6 +35,8 @@ namespace core::data
     {
       bool operator()( const StringId& a, const StringId& b ) const noexcept;
     };
+
+    friend constexpr auto operator<=>( const StringId&, const StringId& ) = default;
   };
 
   template<typename T>
@@ -42,4 +44,4 @@ namespace core::data
 
   template<typename T>
   using StringIdMultiMap = std::unordered_multimap<StringId, T, StringId::Hash, StringId::EqualTo>;
-} // namespace data
+} // namespace core::data

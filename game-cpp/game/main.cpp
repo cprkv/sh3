@@ -11,6 +11,7 @@ int main( int, char** )
   if( auto s = game::subsysInit(); s != StatusOk )
     core::system::fatalError( "Game initialization failed: %d %s", ( int ) s, core::getErrorDetails() );
 
+  game::SceneManager::i->loadScene( "maps/debug/cs-arrows" );
   game::SceneManager::i->loadScene( "X0/MR1F-MFA/mr1f-pp" );
 
   for( ;; )

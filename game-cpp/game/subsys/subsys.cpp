@@ -45,7 +45,9 @@ namespace
     SceneCollection sceneCollection_;
 
     core::math::SphereStraightRotation rotation_;
-    Vec3                               position_ = { 0, 0, 0 };
+    Vec3                               position_         = { 0, 0, 0 };
+    Mat4                               cubeTransform_    = Mat4( 1 );
+    Vec3                               cubeRotationAxis_ = Vec3( 1, 0, 0 );
 
     // TODO: may be load here some basic resources
     Status init() override { return StatusOk; }
@@ -54,6 +56,28 @@ namespace
     {
       {
         using namespace core::input;
+
+        // cube rotation
+        {
+          if( isKeyPressed( KeyX ) )
+          {
+            cubeRotationAxis_ = Vec3( 1, 0, 0 );
+            cubeTransform_    = Mat4( 1 );
+          }
+          else if( isKeyPressed( KeyY ) )
+          {
+            cubeRotationAxis_ = Vec3( 0, 1, 0 );
+            cubeTransform_    = Mat4( 1 );
+          }
+          else if( isKeyPressed( KeyZ ) )
+          {
+            cubeRotationAxis_ = Vec3( 0, 0, 1 );
+            cubeTransform_    = Mat4( 1 );
+          }
+
+          f32 rotateFactor = core::loopGetDeltaTime().getMsF() * 0.002f;
+          cubeTransform_ *= glm::rotate( rotateFactor, cubeRotationAxis_ );
+        }
 
         // rotation
         {
@@ -71,7 +95,7 @@ namespace
 
           f32 rotateFactor = core::loopGetDeltaTime().getMsF() * 0.002f;
           delta *= rotateFactor;
-       
+
           // TODO: this is messed up: delta.x should be positive...
           rotation_.rotate( -delta.x, delta.y );
         }
@@ -115,7 +139,10 @@ namespace
       {
         for( const auto& entity: scene )
         {
-          renderList.addMesh( entity.mesh, entity.textureDiffuse );
+          if( entity.mesh == core::data::StringId( "Cube" ) )
+            renderList.addMesh( entity.mesh, entity.textureDiffuse, cubeTransform_ );
+          else
+            renderList.addMesh( entity.mesh, entity.textureDiffuse, Mat4( 1 ) );
         }
       }
 

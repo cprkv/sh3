@@ -6,9 +6,13 @@
 
 There are 2 coordinate systems:
 
-- **Blender** X-right, Y-forward, Z-up right-handed used all across engine, starting from importing assets from blender up to gamplay activities. ![z-up](./cs-z-up.jpg)
-- **DirectX** X-right, Y-up, Z-forward left-handed which is used for camera transform for DirectX. ![y-up](./cs-y-up.jpg)
+| Name | Image | Coordinates | Used in |
+| ---- | ----- | ----------- | ------- |
+| **Blender** | ![z-up](./cs-z-up.jpg) | X&#8209;right<br />Y&#8209;forward<br />Z&#8209;up<br />right&#8209;handed | Used all across engine, starting from importing assets from blender up to gamplay activities |
+| **DirectX** | ![y-up](./cs-y-up.jpg) | X&#8209;right<br />Y&#8209;up<br />Z&#8209;forward<br />left&#8209;handed | Used in world->view transform so everying is fine for projection |
 
 > Because 2 coordinate systems is used, it is kinda messy in shaders: everething in *World is Blender coordinates, but *View in DirectX coordinates.
 
 Matrix-vector multiplication is right-side: `M * v`.
+
+Rotation follows right-hand rule.

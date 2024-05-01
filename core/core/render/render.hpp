@@ -15,6 +15,7 @@ namespace core::render
     {
       Mesh*    mesh;
       Texture* diffuseTexture;
+      Mat4     worldTransform;
     };
 
     std::vector<Drawable> drawables;
@@ -24,7 +25,7 @@ namespace core::render
     Mat4 viewToProjectionTransform;
 
     // TODO: camera
-    void addMesh( data::StringId meshId, data::StringId diffuseTextureId );
+    void addMesh( data::StringId meshId, data::StringId diffuseTextureId, Mat4 worldTransform );
     void submit();
   };
 

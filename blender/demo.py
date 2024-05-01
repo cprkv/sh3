@@ -116,7 +116,7 @@ def get_path_info(texture_path_str: str) -> ShPathInfo:
   path = Path(texture_path_str)
   collection = []
   base = []
-  default_parts = ['X0', 'X1', 'X2', 'X3', 'XBG0-MFA']
+  default_parts = ['X0', 'X1', 'X2', 'X3', 'XBG0-MFA', 'maps']
   for part in path.parts:
     if len(collection) > 0 or part in default_parts:
       collection.append(part)
