@@ -34,4 +34,5 @@ namespace core::math
   };
 
 
+  Vec3 decodeColorHex( u32 value );
 } // namespace core::math

@@ -140,9 +140,9 @@ namespace
         for( const auto& entity: scene )
         {
           if( entity.mesh == core::data::StringId( "Cube" ) )
-            renderList.addMesh( entity.mesh, entity.textureDiffuse, cubeTransform_ );
+            renderList.addMesh( entity.mesh, entity.textureDiffuse, entity.transform * cubeTransform_ );
           else
-            renderList.addMesh( entity.mesh, entity.textureDiffuse, Mat4( 1 ) );
+            renderList.addMesh( entity.mesh, entity.textureDiffuse, entity.transform );
         }
       }
 

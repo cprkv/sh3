@@ -4,6 +4,8 @@
 
 ### Coordinate system and convensions
 
+> See [Matrices, Handedness, Pre and Post Multiplication, Row vs Column Major, and Notations](https://web.archive.org/web/20180820172336/http://seanmiddleditch.com/matrices-handedness-pre-and-post-multiplication-row-vs-column-major-and-notations/).
+
 There are 2 coordinate systems:
 
 | Name | Image | Coordinates | Used in |

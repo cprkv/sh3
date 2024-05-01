@@ -20,7 +20,7 @@ namespace game
     ~ShComponentTransform() override = default;
     ShComponentType getType() const override { return ShComponentType_Transform; }
     Vec3            position;
-    Vec4            rotation;
+    Quat            rotation;
     Vec3            scale;
   };
 

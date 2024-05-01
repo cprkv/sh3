@@ -79,6 +79,13 @@ void game::tasks::loadScene( const std::string& name, std::vector<SceneEntity>& 
           const auto* typedComponent = reinterpret_cast<const ShComponentMaterial*>( component.get() );
           entity.textureDiffuse      = typedComponent->diffuse;
         }
+        else if( component->getType() == ShComponentType_Transform )
+        {
+          const auto* typedComponent = reinterpret_cast<const ShComponentTransform*>( component.get() );
+          entity.transform = glm::translate( typedComponent->position ) *
+                             glm::toMat4( typedComponent->rotation ) *
+                             glm::scale( typedComponent->scale );
+        }
       }
 
       if( entity.mesh && entity.textureDiffuse )

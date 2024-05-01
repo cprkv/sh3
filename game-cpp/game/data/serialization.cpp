@@ -7,6 +7,7 @@ namespace glm
 {
   NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE( vec3, x, y, z );
   NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE( vec4, x, y, z, w );
+  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE( fquat, x, y, z, w );
 } // namespace glm
 
 namespace nlohmann

@@ -53,3 +53,13 @@ Mat4 Camera::getViewToProjectionTransform() const
   // todo: this needs to be precalculated, not changed every frame
   return glm::perspectiveLH_ZO( cameraMMToFovY( focalLength ), aspectRatio, nearPlane, farPlane );
 }
+
+
+Vec3 core::math::decodeColorHex( u32 value )
+{
+  return Vec3(
+      ( ( value >> 16 ) & 0xFF ) / 255.0, // Extract the RR byte
+      ( ( value >> 8 ) & 0xFF ) / 255.0,  // Extract the GG byte
+      ( ( value ) & 0xFF ) / 255.0        // Extract the BB byte
+  );
+}

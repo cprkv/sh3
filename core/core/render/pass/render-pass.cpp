@@ -1,6 +1,7 @@
 #include "core/render/pass/render-pass.hpp"
 #include "core/render/gapi/device.hpp"
 #include "core/render/gapi/render-pipeline.hpp"
+#include "core/math/math.hpp"
 
 using namespace core::render;
 using namespace core::render::gapi;
@@ -65,12 +66,15 @@ void RenderPass3D::render( RenderList& renderList )
   renderTarget.clear( Vec4( 0, 1, 0, 1 ) );
 
   {
-    auto& vsConstant                 = gCommonRenderData->oldFullVSConstant;
-    vsConstant->gSceneLights.count   = 0;
-    vsConstant->gSceneLights.ambient = Vec3( 1 );
-    vsConstant->gViewPos             = renderList.viewPosition;
-    vsConstant->gWorldToView         = renderList.worldToViewTransform;
-    vsConstant->gViewToProjection    = renderList.viewToProjectionTransform;
+    auto& vsConstant                             = gCommonRenderData->oldFullVSConstant;
+    vsConstant->gSceneLights.ambient             = Vec3( 0.1f );
+    vsConstant->gSceneLights.count               = 1;
+    vsConstant->gSceneLights.lights[0].position  = Vec3( 0 );
+    vsConstant->gSceneLights.lights[0].color     = core::math::decodeColorHex( 0xE78CFF );
+    vsConstant->gSceneLights.lights[0].intensity = 40;
+    vsConstant->gViewPos                         = renderList.viewPosition;
+    vsConstant->gWorldToView                     = renderList.worldToViewTransform;
+    vsConstant->gViewToProjection                = renderList.viewToProjectionTransform;
     if( vsConstant.update() != StatusOk )
     {
       mCoreLog( "update constant failed" );

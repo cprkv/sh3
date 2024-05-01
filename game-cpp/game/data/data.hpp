@@ -7,6 +7,7 @@ namespace game
   {
     core::data::StringId mesh;
     core::data::StringId textureDiffuse;
+    Mat4                 transform; // TODO: make class Transform in core::math
   };
 
 

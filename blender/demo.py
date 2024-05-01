@@ -5,6 +5,7 @@ import bmesh
 import tempfile
 import umsgpack
 import json
+import mathutils
 from pathlib import Path
 from typing import List
 from schema import *
@@ -111,6 +112,15 @@ def vec_to_map(v):
   return result
 
 
+def quat_to_map(v):
+  return {
+      'x': v.x,
+      'y': v.y,
+      'z': v.z,
+      'w': v.w,
+  }
+
+
 def get_path_info(texture_path_str: str) -> ShPathInfo:
   # TODO: check is full path
   path = Path(texture_path_str)
@@ -173,7 +183,8 @@ def get_material_info(mat) -> ShMaterialInfo:
 
 def get_mesh_vertex_datas(mesh, object_matrix) -> List:
   mesh_triangulate(mesh)
-  mesh.transform(object_matrix)
+  # mesh.transform(object_matrix) # APPLY ALL TRANSFORMS
+
   # if negative scaling, we have to invert the normals
   # "If the determinant is negative, the basis is said to be "negatively" oriented (or left-handed)."
   if object_matrix.determinant() < 0.0:
@@ -203,11 +214,13 @@ def path_without_extension(path):
 
 
 def get_object_components(obj, mesh_info: ShMeshInfo) -> List[ShComponent]:
+  obj.rotation_mode = 'QUATERNION'
+
   components: List[ShComponent] = []
 
   transform: ShTransformComponent = {'$type': SH_COMPONENT_TRANSFORM,
                                      'position': vec_to_map(obj.location),
-                                     'rotation': vec_to_map(obj.rotation_quaternion),
+                                     'rotation': quat_to_map(obj.rotation_quaternion),
                                      'scale': vec_to_map(obj.scale)}
   components.append(transform)
 
