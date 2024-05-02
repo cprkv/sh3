@@ -139,7 +139,7 @@ namespace
       {
         for( const auto& entity: scene )
         {
-          if( entity.mesh == core::data::StringId( "Cube" ) )
+          if( entity.mesh == "Cube"_sid )
             renderList.addMesh( entity.mesh, entity.textureDiffuse, entity.transform * cubeTransform_ );
           else
             renderList.addMesh( entity.mesh, entity.textureDiffuse, entity.transform );

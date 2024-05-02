@@ -630,7 +630,8 @@ inline std::ostream& operator<<(std::ostream& os, const TestFailure& test_failur
 
 //------------------------------------------------------------------------------
 
-#if defined(__clang__) || defined(__GLIBCXX__) || defined(__GLIBCPP__)
+// TODO (vadik): this not available in clang+msvc
+#if 0 && (defined(__clang__) || defined(__GLIBCXX__) || defined(__GLIBCPP__))
 #include <cxxabi.h>
 #include <cstdlib>
 inline std::string demangle(const char* typeinfo_name) {

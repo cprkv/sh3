@@ -46,7 +46,7 @@ function(vy_configure_compiler target)
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS ON
     INTERPROCEDURAL_OPTIMIZATION $<IF:$<AND:$<NOT:$<CONFIG:Debug>>:$<BOOL:${IPO_SUPPORTED}>>,ON,OFF>
-    MSVC_DEBUG_INFORMATION_FORMAT EditAndContinue
+    # MSVC_DEBUG_INFORMATION_FORMAT EditAndContinue
   )
   # $<$<OR:$<CONFIG:RelWithDebInfo>,$<CONFIG:Debug>>:/analyze>
   # -fanalyzer
@@ -59,12 +59,13 @@ function(vy_configure_compiler target)
 
   target_compile_options(${PROJECT_NAME} PUBLIC
     $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
-    $<$<CXX_COMPILER_ID:GNU>:-Wall -Wextra -Wshadow -Wconversion -Wpedantic -Werror -Wno-error=analyzer-malloc-leak -Wno-error=analyzer-possible-null-dereference>
+    $<$<CXX_COMPILER_ID:GNU>:-Wall -Wextra -Wshadow -Wconversion -Wpedantic -Werror -fanalyzer>
     #$<${debug_msvc}:/ZI>
     $<${release_msvc}:/guard:cf>
   )
   target_link_options(${PROJECT_NAME} PUBLIC
     $<$<CXX_COMPILER_ID:MSVC>:/CETCOMPAT>
+    $<$<CXX_COMPILER_ID:GNU>:-fanalyzer>
     $<${release_msvc}:/guard:cf>
   )
 endfunction()

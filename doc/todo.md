@@ -2,9 +2,13 @@
 
 ## todo:
 
-- core
-  - document how rotation works, and check quaternions from blender, if it works
+- game
+  - component system (behaviours)
+  - scene system
+    - scene stacking (base scene, current scene, scene view (merged))
+  - script engine (lua first, and then with big codebase switch to angelscript or luau)
 - render
+  - animation (serialization, playing, animator component)
   - ui
   - technology improvements from original
     - ssao
