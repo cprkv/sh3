@@ -6,6 +6,7 @@
 #include "core/render/render.hpp"
 #include "core/input/input.hpp"
 #include "core/math/math.hpp"
+#include "core/logic/logic.hpp"
 
 namespace core
 {

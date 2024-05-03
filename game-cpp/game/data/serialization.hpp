@@ -28,14 +28,14 @@ namespace game
   {
     ~ShComponentMaterial() override = default;
     ShComponentType getType() const override { return ShComponentType_Material; }
-    core::data::StringId  diffuse; // texture id
+    StringId        diffuse; // texture id
   };
 
   struct ShComponentMesh : public ShComponent
   {
     ~ShComponentMesh() override = default;
     ShComponentType getType() const override { return ShComponentType_Mesh; }
-    core::data::StringId id; // mesh id
+    StringId        id; // mesh id
   };
 
   struct ShObjectInfo

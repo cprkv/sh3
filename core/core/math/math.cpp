@@ -51,7 +51,8 @@ Mat4 Camera::getWorldToViewTransform() const
 Mat4 Camera::getViewToProjectionTransform() const
 {
   // todo: this needs to be precalculated, not changed every frame
-  return glm::perspectiveLH_ZO( cameraMMToFovY( focalLength ), aspectRatio, nearPlane, farPlane );
+  float fovY = cameraMMToFovY( focalLength );
+  return glm::perspectiveLH_ZO( fovY, aspectRatio, nearPlane, farPlane );
 }
 
 

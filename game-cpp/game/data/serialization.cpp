@@ -37,13 +37,13 @@ namespace nlohmann
       else if( type == "Material" )
       {
         auto c     = std::make_unique<ShComponentMaterial>();
-        c->diffuse = core::data::StringId( j.at( "diffuse" ).get<std::string>() );
+        c->diffuse = StringId( j.at( "diffuse" ).get<std::string>() );
         p          = std::move( c );
       }
       else if( type == "Mesh" )
       {
         auto c = std::make_unique<ShComponentMesh>();
-        c->id  = core::data::StringId( j.at( "name" ).get<std::string>() );
+        c->id  = StringId( j.at( "name" ).get<std::string>() );
         p      = std::move( c );
       }
       else

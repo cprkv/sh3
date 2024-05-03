@@ -1,7 +1,6 @@
 #include "core/common.hpp"
 #include "core/fs/file.hpp"
 #include "core/data/data.hpp"
-#include "core/data/string-id.hpp"
 #include "schema.hpp"
 #include "image.hpp"
 #include <meshoptimizer.h>
@@ -64,7 +63,7 @@ namespace
 #endif
 
     auto outputMesh = core::data::schema::Mesh{
-        .id           = core::data::StringId( meshInfo.name ),
+        .id           = StringId( meshInfo.name ),
         .indexBuffer  = std::move( indices ),
         .vertexBuffer = std::move( vertices ),
     };

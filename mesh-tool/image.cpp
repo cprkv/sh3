@@ -1,5 +1,4 @@
 #include "image.hpp"
-#include "core/data/string-id.hpp"
 #include "core/data/data.hpp"
 #include "core/fs/file.hpp"
 #include <nvtt/nvtt.h>
@@ -78,7 +77,7 @@ namespace
   {
     auto path = stdfs::path( textureInfo.path.path ).replace_extension( "" ).generic_string();
     printf( "texture path: %s\n", path.c_str() );
-    return core::data::StringId( path );
+    return StringId( path );
   }
 
   bool textureEq( const TextureInfo& a, const TextureInfo& b )
@@ -336,7 +335,7 @@ void intermediate::processMaterials( const SceneInfo&           sceneInfo,
 
   for( const auto& mesh: sceneInfo.meshes )
   {
-    u64  materialId = core::data::StringId( mesh.material_info.name );
+    u64  materialId = StringId( mesh.material_info.name );
     auto materialIt = std::find_if(
         outputChunk.materials.begin(), outputChunk.materials.end(),
         [=]( const core::data::schema::Material& m ) { return m.id == materialId; } );

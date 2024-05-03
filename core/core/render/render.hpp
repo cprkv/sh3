@@ -4,7 +4,6 @@
 #include "core/render/shader-table.hpp"
 #include "core/render/gapi/resources.hpp"
 #include "core/render/gapi/device.hpp"
-#include "core/data/string-id.hpp"
 
 namespace core::render
 {
@@ -25,7 +24,7 @@ namespace core::render
     Mat4 viewToProjectionTransform;
 
     // TODO: camera
-    void addMesh( data::StringId meshId, data::StringId diffuseTextureId, Mat4 worldTransform );
+    void addMesh( StringId meshId, StringId diffuseTextureId, Mat4 worldTransform );
     void submit();
   };
 

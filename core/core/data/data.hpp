@@ -1,6 +1,5 @@
 #pragma once
 #include "core/common.hpp"
-#include "core/data/string-id.hpp"
 
 namespace core::render
 {
@@ -19,9 +18,9 @@ namespace core::data
 
   struct RenderData
   {
-    std::vector<data::StringHash> materials;
-    std::vector<data::StringHash> meshes;
-    std::vector<data::StringHash> textures;
+    std::vector<StringHash> materials;
+    std::vector<StringHash> meshes;
+    std::vector<StringHash> textures;
   };
 
   struct LoadRenderChunkTask
