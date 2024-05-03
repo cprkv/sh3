@@ -42,6 +42,14 @@ namespace game
   };
 
 
+  struct RenderManager : public SubSystem
+  {
+    static inline RenderManager* i = nullptr;
+
+    core::render::RenderList renderList;
+  };
+
+
   Status subsysInit();
   void   subsysUpdate();
   void   subsysShutdown();

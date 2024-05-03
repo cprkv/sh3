@@ -14,10 +14,8 @@ namespace
 } // namespace
 
 
-void game::tasks::loadScene( const std::string& name, std::vector<SceneEntity>& entities )
+void game::tasks::loadScene( const std::string& name, std::function<void( SceneInfo )> action )
 {
-  // TODO: more logic about what scene looks like: is it just bunch of stuff like weapons collection or is it real 3D scene..
-
   auto chunkPath     = core::data::getDataPath( ( name + ".chunk" ).c_str() );
   auto sceneJsonPath = core::data::getDataPath( ( name + ".scene.json" ).c_str() );
 
@@ -45,7 +43,9 @@ void game::tasks::loadScene( const std::string& name, std::vector<SceneEntity>& 
   } );
 
 
-  auto task = [loadTask = std::move( loadTask ), loadSceneInfoTask, &entities]() mutable -> core::PeriodicalStatus {
+  auto task = [loadTask = std::move( loadTask ),
+               action   = std::move( action ),
+               loadSceneInfoTask]() mutable -> core::PeriodicalStatus {
     if( !loadTask->done || !loadSceneInfoTask->status.has_value() )
       return core::PeriodicalStatusContinue;
 
@@ -63,42 +63,11 @@ void game::tasks::loadScene( const std::string& name, std::vector<SceneEntity>& 
       return core::PeriodicalStatusStop;
     }
 
-    for( const auto& obj: loadSceneInfoTask->result.objects )
-    {
-      SceneEntity entity;
+    // TODO: check everything in loadSceneInfoTask->result is actually loaded
 
-      for( const auto& component: obj.components )
-      {
-        if( component->getType() == ShComponentType_Mesh )
-        {
-          const auto* typedComponent = reinterpret_cast<const ShComponentMesh*>( component.get() );
-          entity.mesh                = typedComponent->id;
-        }
-        else if( component->getType() == ShComponentType_Material )
-        {
-          const auto* typedComponent = reinterpret_cast<const ShComponentMaterial*>( component.get() );
-          entity.textureDiffuse      = typedComponent->diffuse;
-        }
-        else if( component->getType() == ShComponentType_Transform )
-        {
-          const auto* typedComponent = reinterpret_cast<const ShComponentTransform*>( component.get() );
-          entity.transform = glm::translate( typedComponent->position ) *
-                             glm::toMat4( typedComponent->rotation ) *
-                             glm::scale( typedComponent->scale );
-        }
-      }
+    action( std::move( loadSceneInfoTask->result ) );
 
-      if( entity.mesh && entity.textureDiffuse )
-      {
-        entities.push_back( entity );
-      }
-      else
-      {
-        mCoreLog( "warn: found entity with no mesh and texture" );
-      }
-    }
-
-    mCoreLog( "loading scene done! entities count: %d\n", ( int ) entities.size() );
+    mCoreLog( "loading scene task done!\n" );
     return core::PeriodicalStatusStop;
   };
 

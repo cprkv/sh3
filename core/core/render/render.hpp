@@ -26,6 +26,7 @@ namespace core::render
     // TODO: camera
     void addMesh( StringId meshId, StringId diffuseTextureId, Mat4 worldTransform );
     void submit();
+    void clear() { drawables.clear(); }
   };
 
 
