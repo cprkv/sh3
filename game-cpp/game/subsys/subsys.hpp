@@ -32,7 +32,8 @@ namespace game
   {
     static inline SceneManager* i = nullptr;
 
-    virtual void loadScene( const char* name ) = 0;
+    virtual void loadScene( const char* name )   = 0;
+    virtual void unloadScene( const char* name ) = 0;
   };
 
 

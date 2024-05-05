@@ -4,5 +4,7 @@
 
 namespace game::tasks
 {
-  void loadScene( const std::string& name, std::function<void( SceneInfo )> action );
+  using LoadSceneAction = std::function<void( game::SceneInfo, core::data::RenderChunkHandle )>;
+
+  void loadScene( const std::string& name, LoadSceneAction action );
 } // namespace game::tasks

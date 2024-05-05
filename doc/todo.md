@@ -16,6 +16,8 @@ status: 👷❔
   - ❔ script engine (lua first, and then with big codebase switch to angelscript or luau)
   - ensure object names are unique across all scenes (and dump to table)
 - render
+  - simplify render resources.. it is too heavy to understand and ids doesn't matter now...
+    - when scene is unloaded, render resources are not freed
   - animation (serialization, playing, animator component)
   - ui
   - technology improvements from original

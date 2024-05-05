@@ -14,13 +14,15 @@ namespace
 } // namespace
 
 
-void game::tasks::loadScene( const std::string& name, std::function<void( SceneInfo )> action )
+void game::tasks::loadScene( const std::string& name, LoadSceneAction action )
 {
   auto chunkPath     = core::data::getDataPath( ( name + ".chunk" ).c_str() );
   auto sceneJsonPath = core::data::getDataPath( ( name + ".scene.json" ).c_str() );
 
-  auto loadTask = std::make_unique<core::data::LoadRenderChunkTask>();
-  core::data::loadRenderChunk( chunkPath.c_str(), loadTask.get() );
+  //auto loadTask = std::make_unique<core::data::LoadRenderChunkTask>();
+  //core::data::loadRenderChunk( chunkPath.c_str(), loadTask.get() );
+  auto renderChunkHandle = core::data::RenderChunkHandle();
+  renderChunkHandle.load( chunkPath.c_str() );
 
   auto loadSceneInfoTask = std::make_shared<LoadSceneJsonTask>();
 
@@ -43,17 +45,12 @@ void game::tasks::loadScene( const std::string& name, std::function<void( SceneI
   } );
 
 
-  auto task = [loadTask = std::move( loadTask ),
-               action   = std::move( action ),
+  auto task = [renderChunkHandle = std::move( renderChunkHandle ),
+               action            = std::move( action ),
                loadSceneInfoTask]() mutable -> core::PeriodicalStatus {
-    if( !loadTask->done || !loadSceneInfoTask->status.has_value() )
-      return core::PeriodicalStatusContinue;
-
-    if( loadTask->status != StatusOk )
+    if( !renderChunkHandle.isLoaded() || !loadSceneInfoTask->status.has_value() )
     {
-      mCoreLogError( "error loading chunk: %d %s\n", ( int ) loadTask->status,
-                     core::getErrorDetails() );
-      return core::PeriodicalStatusStop;
+      return core::PeriodicalStatusContinue;
     }
 
     if( loadSceneInfoTask->status != StatusOk )
@@ -63,9 +60,7 @@ void game::tasks::loadScene( const std::string& name, std::function<void( SceneI
       return core::PeriodicalStatusStop;
     }
 
-    // TODO: check everything in loadSceneInfoTask->result is actually loaded
-
-    action( std::move( loadSceneInfoTask->result ) );
+    action( std::move( loadSceneInfoTask->result ), std::move( renderChunkHandle ) );
 
     mCoreLog( "loading scene task done!\n" );
     return core::PeriodicalStatusStop;

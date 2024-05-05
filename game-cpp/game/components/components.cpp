@@ -30,9 +30,9 @@ namespace
   public:
     mCoreComponent( RenderMeshComponent );
 
-    StringId            mesh;
-    StringId            textureDiffuse;
-    TransformComponent* transform;
+    core::render::Mesh*    mesh;
+    core::render::Texture* textureDiffuse;
+    TransformComponent*    transform;
 
     void init() override
     {
@@ -123,7 +123,7 @@ void FreeFlyCameraComponent::update( const core::system::DeltaTime& dt )
 }
 
 
-void game::instantiateComponents( core::Entity& entity, const ShObjectInfo& objectInfo )
+void game::instantiateComponents( core::Entity& entity, const ShObjectInfo& objectInfo, core::data::RenderChunkHandle& renderChunk )
 {
   auto* transform = findShComponent<ShComponentTransform>( objectInfo.components );
   auto* material  = findShComponent<ShComponentMaterial>( objectInfo.components );
@@ -140,7 +140,10 @@ void game::instantiateComponents( core::Entity& entity, const ShObjectInfo& obje
   if( material && mesh )
   {
     auto* c           = entity.addComponent<RenderMeshComponent>();
-    c->mesh           = mesh->id;
-    c->textureDiffuse = material->diffuse;
+    c->mesh           = renderChunk.getMesh( mesh->id );
+    c->textureDiffuse = renderChunk.getTexture( material->diffuse );
+
+    assert( c->mesh );
+    assert( c->textureDiffuse );
   }
 }

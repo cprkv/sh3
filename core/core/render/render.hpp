@@ -24,7 +24,7 @@ namespace core::render
     Mat4 viewToProjectionTransform;
 
     // TODO: camera
-    void addMesh( StringId meshId, StringId diffuseTextureId, Mat4 worldTransform );
+    void addMesh( Mesh* mesh, Texture* diffuseTexture, Mat4 worldTransform );
     void submit();
     void clear() { drawables.clear(); }
   };

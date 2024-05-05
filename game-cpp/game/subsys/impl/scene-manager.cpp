@@ -6,19 +6,26 @@ using namespace game;
 
 namespace
 {
+  struct SceneInfo
+  {
+    core::Scene                                scene;
+    std::vector<core::data::RenderChunkHandle> renderChunkHandles;
+  };
+
+
   struct SceneManagerImpl : public SceneManager
   {
-    std::list<core::Scene> scenes_;
+    std::list<SceneInfo> scenes_;
 
     // TODO: may be load here some basic resources
     Status init() override
     {
       // TODO: this is very dirty hack....
       {
-        scenes_.emplace_back( "camera"_sid );
-        auto* cameraEntity = scenes_.rbegin()->addEntity( "camera"_sid );
+        auto& sceneInfo    = scenes_.emplace_back( SceneInfo{ .scene = core::Scene{ "camera"_sid } } );
+        auto* cameraEntity = sceneInfo.scene.addEntity( "camera"_sid );
         cameraEntity->addComponent<FreeFlyCameraComponent>();
-        scenes_.rbegin()->init();
+        sceneInfo.scene.init();
       }
 
       return StatusOk;
@@ -26,32 +33,44 @@ namespace
 
     void update() override
     {
-      for( auto& scene: scenes_ )
+      for( auto& sceneInfo: scenes_ )
       {
-        scene.update( core::loopGetDeltaTime() );
+        sceneInfo.scene.update( core::loopGetDeltaTime() );
       }
     }
 
     void shutdown() override
     {
-      for( auto& scene: scenes_ )
+      for( auto& sceneInfo: scenes_ )
       {
-        scene.shutdown();
+        sceneInfo.scene.shutdown();
       }
     }
 
     void loadScene( const char* name ) override
     {
-      scenes_.emplace_back( StringId( name ) );
-      auto* scene = &*scenes_.rbegin();
+      auto* scene = &scenes_.emplace_back( StringId( name ) );
 
-      tasks::loadScene( name, [scene]( SceneInfo sceneInfo ) {
+      tasks::loadScene( name, [scene]( game::SceneInfo sceneInfo, core::data::RenderChunkHandle renderChunk ) {
+        scene->renderChunkHandles = { std::move( renderChunk ) };
+
         for( const auto& object: sceneInfo.objects )
         {
-          auto* entity = scene->addEntity( StringId( object.name ) );
-          instantiateComponents( *entity, object );
+          auto* entity = scene->scene.addEntity( StringId( object.name ) );
+          instantiateComponents( *entity, object, scene->renderChunkHandles[0] );
         }
-        scene->init();
+
+        scene->scene.init();
+      } );
+    }
+
+    void unloadScene( const char* name ) override
+    {
+      auto sceneId = StringId( name );
+      core::loopEnqueueDefferedTask( [this, sceneId]() {
+        scenes_.remove_if( [=]( SceneInfo& scene ) {
+          return scene.scene.getId() == sceneId;
+        } );
       } );
     }
 

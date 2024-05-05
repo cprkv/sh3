@@ -38,20 +38,8 @@ namespace
 } // namespace
 
 
-void RenderList::addMesh( StringId meshId, StringId diffuseTextureId, Mat4 worldTransform )
+void RenderList::addMesh( Mesh* mesh, Texture* diffuseTexture, Mat4 worldTransform )
 {
-  auto* mesh           = data::findMesh( meshId );
-  auto* diffuseTexture = data::findTexture( diffuseTextureId );
-  if( mesh == nullptr )
-  {
-    mCoreLog( "warn: mesh not found by id " mFmtU64 " and will not be drawn", meshId.getHash() );
-    return;
-  }
-  if( diffuseTexture == nullptr )
-  {
-    mCoreLog( "warn: texture not found by id " mFmtU64 " and will not be drawn", diffuseTextureId.getHash() );
-    return;
-  }
   auto drawable = Drawable{
       .mesh           = mesh,
       .diffuseTexture = diffuseTexture,

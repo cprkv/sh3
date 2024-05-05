@@ -3,7 +3,8 @@
 
 namespace
 {
-  char* sErrorDetails = nullptr;
+  char       sErrorDetails[4096] = { 0 };
+  std::mutex sErrorDetailsMutex;
 } // namespace
 
 
@@ -13,8 +14,8 @@ std::string core::formatMessage( const char* fmt, va_list args )
   if( count < 0 )
     return { "<format-error>" };
 
-  auto   result     = std::string( count, '\0' );
-  count             = vsnprintf( result.data(), count + 1, fmt, args );
+  auto result = std::string( count, '\0' );
+  count       = vsnprintf( result.data(), count + 1, fmt, args );
   if( count < 0 )
     return { "<format-error>" };
 
@@ -24,50 +25,40 @@ std::string core::formatMessage( const char* fmt, va_list args )
 
 const char* core::getErrorDetails()
 {
-  return sErrorDetails ? sErrorDetails : "<no-error>";
+  return sErrorDetails;
 }
 
 
 void core::setErrorDetails( const char* fmt, ... )
 {
-  if( sErrorDetails )
-  {
-    free( sErrorDetails );
-  }
-
   if( !fmt )
-  {
-    sErrorDetails = nullptr;
     return;
-  }
 
   va_list args;
   va_start( args, fmt );
   {
-    int count = vsnprintf( nullptr, 0, fmt, args );
+    int  count = vsnprintf( nullptr, 0, fmt, args );
+    auto lock  = std::scoped_lock( sErrorDetailsMutex );
 
     if( count < 0 )
     {
-      sErrorDetails = _strdup( "<format-error>" );
+      strcpy( sErrorDetails, "<format-error>" );
+    }
+    else if( count >= std::size( sErrorDetails ) )
+    {
+      strcpy( sErrorDetails, "<error-too-big>" );
     }
     else
     {
-      size_t bufferSize = ( size_t ) count + 1;
-      auto   result     = ( char* ) malloc( bufferSize );
-      count             = vsnprintf( result, bufferSize, fmt, args );
+      count = vsnprintf( sErrorDetails, std::size( sErrorDetails ), fmt, args );
 
       if( count < 0 )
       {
-        sErrorDetails = _strdup( "<format-error>" );
-        free( result );
-      }
-      else
-      {
-        sErrorDetails = result;
+        strcpy( sErrorDetails, "<format-error>" );
       }
     }
+
+    mCoreLogError( "error details: %s\n", sErrorDetails );
   }
   va_end( args );
-
-  mCoreLogError( "error details: %s\n", sErrorDetails );
 }

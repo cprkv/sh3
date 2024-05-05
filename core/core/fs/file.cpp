@@ -228,3 +228,25 @@ Status fs::readFileJson( const char* path, Json& out )
 
   return StatusOk;
 }
+
+
+Status fs::readFileMsgpack( const char* path, msgpack::object& out, msgpack::object_handle& objectHandle )
+{
+  mCoreLog( "loading msgpack at %s\n", path );
+
+  auto bytes = std::vector<byte>();
+  mCoreCheckStatus( fs::readFile( path, bytes ) );
+
+  try
+  {
+    objectHandle = msgpack::unpack( reinterpret_cast<const char*>( bytes.data() ), bytes.size() );
+    out          = objectHandle.get();
+  }
+  catch( const std::exception& ex )
+  {
+    core::setErrorDetails( "exception while decoding render chunk: %s", ex.what() );
+    return StatusSystemError;
+  }
+
+  return StatusOk;
+}
