@@ -90,8 +90,12 @@ namespace core::input
 
   void initialize();
   void destroy();
+  void preUpdate();
   void handle( SDL_Event& e );
+
   bool isKeyPressed( Key k );
+  bool isKeyDown( Key k );
+  bool isKeyUp( Key k );
   bool isKeyMod( KeyMod m );
 } // namespace core::input
 

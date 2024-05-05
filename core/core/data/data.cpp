@@ -57,11 +57,15 @@ Status data::initialize()
   return StatusOk;
 }
 
-
 void data::destroy()
 {
   destroyRenderChunk();
   delete sData;
+}
+
+void data::update()
+{
+  updateRenderChunk();
 }
 
 std::string data::getDataPath( const stdfs::path& resourceName )

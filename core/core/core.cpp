@@ -140,6 +140,9 @@ LoopStatus core::loopStepBegin()
   sData->deltaTime.onLoopStart();
   auto stopwatch = core::system::Stopwatch();
 
+  data::update();
+  input::preUpdate();
+
   SDL_Event event;
   while( SDL_PollEvent( &event ) )
   {
@@ -160,7 +163,7 @@ LoopStatus core::loopStepBegin()
       if( !message )
       {
         if( tasksCompleted > 0 )
-          mCoreLog( "deffered tasks completed: " mFmtU32 "\n", tasksCompleted );
+          mCoreLogDebug( "deffered tasks completed: " mFmtU32 "\n", tasksCompleted );
         break;
       }
 
@@ -172,8 +175,8 @@ LoopStatus core::loopStepBegin()
       {
         auto diff = timePassedMs - deadlineMs;
         if( diff > 0 )
-          mCoreLog( "deffered tasks is " mFmtU64 "ms ahead of deadline\n", diff );
-        mCoreLog( "deffered tasks completed: " mFmtU32 "\n", tasksCompleted );
+          mCoreLogDebug( "deffered tasks is " mFmtU64 "ms ahead of deadline\n", diff );
+        mCoreLogDebug( "deffered tasks completed: " mFmtU32 "\n", tasksCompleted );
         break;
       }
     }

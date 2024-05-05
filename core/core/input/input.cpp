@@ -41,8 +41,10 @@ namespace
 
   struct StaticData
   {
-    bool keyState[KeyCount]           = { false };
-    bool keyModState[KeyModCount + 1] = { false };
+    std::array<bool, KeyCount>        keyState;
+    std::array<bool, KeyCount>        keyDown;
+    std::array<bool, KeyCount>        keyUp;
+    std::array<bool, KeyModCount + 1> keyModState;
   };
 
   StaticData* sData = nullptr;
@@ -91,6 +93,12 @@ void input::destroy()
   delete sData;
 }
 
+void input::preUpdate()
+{
+  sData->keyDown.fill( false );
+  sData->keyUp.fill( false );
+}
+
 void input::handle( SDL_Event& e )
 {
   if( e.type != SDL_KEYDOWN && e.type != SDL_KEYUP )
@@ -101,11 +109,17 @@ void input::handle( SDL_Event& e )
   {
     bool oldState = sData->keyState[k];
     bool newState = ( e.type == SDL_KEYDOWN );
+
     if( newState != oldState )
     {
       mCoreLogDebug( "key change state: %s (%d->%d)\n", SDL_GetKeyName( e.key.keysym.sym ),
                      ( int ) oldState, ( int ) newState );
       sData->keyState[k] = newState;
+
+      if( e.type == SDL_KEYDOWN )
+        sData->keyDown[k] = true;
+      else
+        sData->keyUp[k] = true;
     }
   }
 
@@ -115,6 +129,16 @@ void input::handle( SDL_Event& e )
 bool input::isKeyPressed( Key k )
 {
   return sData->keyState[k];
+}
+
+bool input::isKeyDown( Key k )
+{
+  return sData->keyDown[k];
+}
+
+bool input::isKeyUp( Key k )
+{
+  return sData->keyUp[k];
 }
 
 bool input::isKeyMod( KeyMod m )

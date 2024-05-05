@@ -9,5 +9,6 @@ namespace core::data
 
   Status initialize();
   void   destroy();
+  void   update();
 
 } // namespace core::data

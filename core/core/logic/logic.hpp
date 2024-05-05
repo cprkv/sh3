@@ -81,6 +81,9 @@ namespace core
 
   // TODO: make it possible to add entities withing init() call (smth like deffered entities collection?)
   // TODO: make it possible to delete entities
+  //
+  // TODO!: scene logic class, which handles updates as any component
+  // TODO!: world logic which persistent..
   class Scene
   {
     StringId          id_;
