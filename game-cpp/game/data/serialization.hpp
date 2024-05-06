@@ -48,6 +48,7 @@ namespace game
   struct SceneInfo
   {
     std::vector<ShObjectInfo> objects;
+    std::vector<std::string>  render_chunks;
   };
 
 

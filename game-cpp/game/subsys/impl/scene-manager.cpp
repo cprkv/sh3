@@ -83,7 +83,7 @@ namespace
       } );
       if( it != scenes_.end() )
       {
-        mCoreLogError( "trying to load scene " mFmtU64 " which is already loaded\n", sceneId );
+        mCoreLogError( "trying to load scene " mFmtU64 " which is already loaded\n", sceneId.getHash() );
         return;
       }
 
@@ -91,13 +91,13 @@ namespace
       auto* scene      = &scenes_.emplace_back( sceneId );
       scene->isLoading = true;
 
-      tasks::loadScene( name, [scene]( game::SceneInfo sceneInfo, core::data::RenderChunkHandle renderChunk ) {
-        scene->renderChunkHandles = { std::move( renderChunk ) };
+      tasks::loadScene( name, [scene]( game::SceneInfo sceneInfo, std::vector<core::data::RenderChunkHandle> renderChunks ) {
+        scene->renderChunkHandles = std::move( renderChunks );
 
         for( const auto& object: sceneInfo.objects )
         {
           auto* entity = scene->scene.addEntity( StringId( object.name ) );
-          instantiateComponents( *entity, object, scene->renderChunkHandles[0] );
+          instantiateComponents( *entity, object, scene->renderChunkHandles );
         }
 
         scene->scene.init();

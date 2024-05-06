@@ -16,6 +16,7 @@ namespace game
     void update( const core::system::DeltaTime& dt ) override;
   };
 
-  void instantiateComponents( core::Entity& entity, const ShObjectInfo& objectInfo, core::data::RenderChunkHandle& renderChunk );
+  void instantiateComponents( core::Entity& entity, const ShObjectInfo& objectInfo,
+                              std::vector<core::data::RenderChunkHandle>& renderChunks );
 
 } // namespace game

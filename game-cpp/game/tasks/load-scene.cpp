@@ -16,51 +16,54 @@ namespace
 
 void game::tasks::loadScene( const std::string& name, LoadSceneAction action )
 {
-  auto chunkPath     = core::data::getDataPath( ( name + ".chunk" ).c_str() );
-  auto sceneJsonPath = core::data::getDataPath( ( name + ".scene.json" ).c_str() );
-
-  //auto loadTask = std::make_unique<core::data::LoadRenderChunkTask>();
-  //core::data::loadRenderChunk( chunkPath.c_str(), loadTask.get() );
-  auto renderChunkHandle = core::data::RenderChunkHandle();
-  renderChunkHandle.load( chunkPath.c_str() );
-
+  auto sceneJsonPath     = core::data::getDataPath( ( name + ".scene.json" ).c_str() );
   auto loadSceneInfoTask = std::make_shared<LoadSceneJsonTask>();
-
 
   core::loopEnqueueTask( [sceneJsonPath, loadSceneInfoTask]() mutable {
     auto sceneInfo = SceneInfo();
-    if( auto s = parseJsonFile( sceneJsonPath, sceneInfo ); s != StatusOk )
-    {
-      core::loopEnqueueDefferedTask( [loadSceneInfoTask = std::move( loadSceneInfoTask )]() {
-        loadSceneInfoTask->status = StatusSystemError;
-      } );
-      return;
-    }
+    auto status    = parseJsonFile( sceneJsonPath, sceneInfo );
 
     core::loopEnqueueDefferedTask( [loadSceneInfoTask = std::move( loadSceneInfoTask ),
-                                    sceneInfo         = std::move( sceneInfo )]() mutable {
+                                    sceneInfo         = std::move( sceneInfo ),
+                                    status]() mutable {
       loadSceneInfoTask->result = std::move( sceneInfo );
-      loadSceneInfoTask->status = StatusOk;
+      loadSceneInfoTask->status = status;
     } );
   } );
 
 
-  auto task = [renderChunkHandle = std::move( renderChunkHandle ),
-               action            = std::move( action ),
+  auto task = [renderChunks = std::vector<core::data::RenderChunkHandle>(),
+               action       = std::move( action ),
                loadSceneInfoTask]() mutable -> core::PeriodicalStatus {
-    if( !renderChunkHandle.isLoaded() || !loadSceneInfoTask->status.has_value() )
-    {
+    // wait json is loaded
+    if( !loadSceneInfoTask->status.has_value() )
       return core::PeriodicalStatusContinue;
-    }
 
     if( loadSceneInfoTask->status != StatusOk )
     {
-      mCoreLogError( "error loading scene json: %d %s\n", ( int ) *loadSceneInfoTask->status,
-                     core::getErrorDetails() );
+      mCoreLogError( "error loading scene json: %d %s\n", ( int ) *loadSceneInfoTask->status, core::getErrorDetails() );
       return core::PeriodicalStatusStop;
     }
 
-    action( std::move( loadSceneInfoTask->result ), std::move( renderChunkHandle ) );
+    // queue load render chunks
+    if( renderChunks.size() != loadSceneInfoTask->result.render_chunks.size() )
+    {
+      renderChunks.resize( loadSceneInfoTask->result.render_chunks.size() );
+      for( size_t i = 0; i < renderChunks.size(); ++i )
+        renderChunks[i].load( loadSceneInfoTask->result.render_chunks[i].c_str() );
+    }
+
+    // wait until render chunks ready
+    if( renderChunks.size() )
+    {
+      auto allLoaded = std::all_of( renderChunks.begin(), renderChunks.end(),
+                                    []( const auto& chunk ) { return chunk.isLoaded(); } );
+      if( !allLoaded )
+        return core::PeriodicalStatusContinue;
+    }
+
+    action( std::move( loadSceneInfoTask->result ),
+            std::move( renderChunks ) );
 
     mCoreLog( "loading scene task done!\n" );
     return core::PeriodicalStatusStop;

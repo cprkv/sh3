@@ -48,8 +48,8 @@ namespace core::fs
   inline Status readFile( std::string path, std::vector<byte>& out ) { return readFile( path.c_str(), out ); }
   Status        readFileJson( const char* path, Json& out );
   inline Status readFileJson( std::string path, Json& out ) { return readFileJson( path.c_str(), out ); }
-  Status        readFileMsgpack( const char* path, msgpack::object& out, msgpack::object_handle& objectHandle );
-  inline Status readFileMsgpack( std::string path, msgpack::object& out, msgpack::object_handle& objectHandle ) { return readFileMsgpack( path.c_str(), out, objectHandle ); }
+  Status        readFileMsgpack( const char* path, msgpack::object& out, msgpack::object_handle& outHandle );
+  inline Status readFileMsgpack( std::string path, msgpack::object& out, msgpack::object_handle& outHandle ) { return readFileMsgpack( path.c_str(), out, outHandle ); }
 
   Status        getEntryInfo( const stdfs::path& path, EntryInfo& out ); // returns: StatusOk / StatusSystemError / StatusNotFound
   inline Status getEntryInfo( const char* path, EntryInfo& out ) { return getEntryInfo( stdfs::path( path ), out ); }

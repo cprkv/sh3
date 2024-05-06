@@ -230,7 +230,7 @@ Status fs::readFileJson( const char* path, Json& out )
 }
 
 
-Status fs::readFileMsgpack( const char* path, msgpack::object& out, msgpack::object_handle& objectHandle )
+Status fs::readFileMsgpack( const char* path, msgpack::object& out, msgpack::object_handle& outHandle )
 {
   mCoreLog( "loading msgpack at %s\n", path );
 
@@ -239,8 +239,8 @@ Status fs::readFileMsgpack( const char* path, msgpack::object& out, msgpack::obj
 
   try
   {
-    objectHandle = msgpack::unpack( reinterpret_cast<const char*>( bytes.data() ), bytes.size() );
-    out          = objectHandle.get();
+    outHandle = msgpack::unpack( reinterpret_cast<const char*>( bytes.data() ), bytes.size() );
+    out       = outHandle.get();
   }
   catch( const std::exception& ex )
   {

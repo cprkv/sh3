@@ -58,6 +58,27 @@ namespace
 
     return nullptr;
   }
+
+
+  core::render::Mesh* findMesh( std::vector<core::data::RenderChunkHandle>& renderChunks, StringId id )
+  {
+    for( auto& chunk: renderChunks )
+      if( auto* mesh = chunk.getMesh( id ) )
+        return mesh;
+
+    assert( false ); // mesh not found
+    return nullptr;
+  }
+
+  core::render::Texture* findTexture( std::vector<core::data::RenderChunkHandle>& renderChunks, StringId id )
+  {
+    for( auto& chunk: renderChunks )
+      if( auto* mesh = chunk.getTexture( id ) )
+        return mesh;
+
+    assert( false ); // texture not found
+    return nullptr;
+  }
 } // namespace
 
 
@@ -123,7 +144,8 @@ void FreeFlyCameraComponent::update( const core::system::DeltaTime& dt )
 }
 
 
-void game::instantiateComponents( core::Entity& entity, const ShObjectInfo& objectInfo, core::data::RenderChunkHandle& renderChunk )
+void game::instantiateComponents( core::Entity& entity, const ShObjectInfo& objectInfo,
+                                  std::vector<core::data::RenderChunkHandle>& renderChunks )
 {
   auto* transform = findShComponent<ShComponentTransform>( objectInfo.components );
   auto* material  = findShComponent<ShComponentMaterial>( objectInfo.components );
@@ -140,8 +162,8 @@ void game::instantiateComponents( core::Entity& entity, const ShObjectInfo& obje
   if( material && mesh )
   {
     auto* c           = entity.addComponent<RenderMeshComponent>();
-    c->mesh           = renderChunk.getMesh( mesh->id );
-    c->textureDiffuse = renderChunk.getTexture( material->diffuse );
+    c->mesh           = findMesh( renderChunks, mesh->id );
+    c->textureDiffuse = findTexture( renderChunks, material->diffuse );
 
     assert( c->mesh );
     assert( c->textureDiffuse );

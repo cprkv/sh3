@@ -103,7 +103,7 @@ namespace
   {
     sData->renderChunks.add( { .id = id, .loading = true } );
     auto chunk     = findRenderChunk( id );
-    auto chunkPath = std::string( name );
+    auto chunkPath = data::getDataPath( name );
 
     core::loopEnqueueTask( [=]() {
       auto chunkImport = data::schema::Chunk();
@@ -111,7 +111,7 @@ namespace
       // 1. read file and decode chunk in understandable format
       {
         msgpack::object_handle objHandle;
-        msgpack::object obj;
+        msgpack::object        obj;
         if( auto s = fs::readFileMsgpack( chunkPath.c_str(), obj, objHandle ); s != StatusOk )
         {
           core::loopEnqueueDefferedTask( [=]() { chunk->loading = false; } );

@@ -85,3 +85,4 @@ class ShObjectInfo(TypedDict):
 
 class SceneInfo(TypedDict):
   objects: List[ShObjectInfo]
+  render_chunks: List[str]

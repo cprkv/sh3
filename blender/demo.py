@@ -243,9 +243,10 @@ def process_scene():
   scene_path_info: ShPathInfo = get_path_info(args.input)
   render_chunk: RenderChunk = {'path': scene_path_info,
                                'meshes': []}
+  render_chunk_name = Path(render_chunk['path']['path']).with_suffix('.chunk').as_posix()
   print(scene_path_info)
 
-  scene_info: SceneInfo = {'objects': []}
+  scene_info: SceneInfo = {'objects': [], 'render_chunks': [render_chunk_name]}
 
   for obj in bpy.data.objects:
     print()

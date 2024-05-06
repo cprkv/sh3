@@ -57,7 +57,7 @@ namespace nlohmann
 namespace game
 {
   NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE( ShObjectInfo, name, components );
-  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE( SceneInfo, objects );
+  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE( SceneInfo, objects, render_chunks );
 } // namespace game
 
 
