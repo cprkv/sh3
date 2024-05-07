@@ -1,5 +1,18 @@
 from typing import List, TypedDict
 
+
+STRING_HASH_BASIS = 14695981039346656037
+STRING_HASH_PRIME = 1099511628211
+STRING_HASH_TRUNC64 = 2 ** 64
+
+
+def string_hash(s: str) -> int:
+  res = STRING_HASH_BASIS
+  for x in [ord(x) for x in s]:
+    res = (((res ^ x) % STRING_HASH_TRUNC64) * STRING_HASH_PRIME) % STRING_HASH_TRUNC64
+  return res
+
+
 #######################################################
 # core data
 #######################################################
@@ -55,27 +68,12 @@ class Vec4fDict(TypedDict):
   w: float
 
 
-SH_COMPONENT_TRANSFORM: str = "Transform"
-SH_COMPONENT_MATERIAL: str = "Material"
-SH_COMPONENT_MESH: str = "Mesh"
+SH_COMPONENT_TRANSFORM: int = string_hash("TransformComponent")
+SH_COMPONENT_RENDER_MESH: int = string_hash("RenderMeshComponent")
 
 
 class ShComponent(TypedDict):
   pass
-
-
-class ShTransformComponent(ShComponent):
-  position: Vec3fDict
-  rotation: Vec4fDict
-  scale: Vec3fDict
-
-
-class ShMaterialComponent(ShComponent):
-  diffuse: str # texture id
-
-
-class ShMeshComponent(ShComponent):
-  name: str # mesh id
 
 
 class ShObjectInfo(TypedDict):

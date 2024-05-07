@@ -88,10 +88,10 @@ namespace core::input
     mXKeyMod( mXEnumMember )
   };
 
-  void initialize();
-  void destroy();
-  void preUpdate();
-  void handle( SDL_Event& e );
+  Status init();
+  void   destroy();
+  void   preUpdate();
+  void   handle( SDL_Event& e );
 
   bool isKeyPressed( Key k );
   bool isKeyDown( Key k );

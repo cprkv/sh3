@@ -16,7 +16,8 @@ namespace game
   {
     static inline CommandManager* i = nullptr;
 
-    virtual void runCommand( const char* cmd ) = 0; // "load-scene ..." -> SceneSubSystem::instance->loadScene("...")
+    // "load-scene ..." -> SceneSubSystem::instance->loadScene("...")
+    virtual void runCommand( const char* cmd ) = 0;
   };
 
 

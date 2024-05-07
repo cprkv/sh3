@@ -101,7 +101,8 @@ Status core::initialize()
   mCoreCheckStatus( initSDL() );
   mCoreCheckStatus( initData() );
   mCoreCheckStatus( initRender() );
-  core::input::initialize();
+  mCoreCheckStatus( input::init() );
+  mCoreCheckStatus( logic::init() );
   mCoreLog( "core initialize succeeded\n" );
   return StatusOk;
 }
@@ -111,12 +112,9 @@ void core::destroy()
 {
   mCoreLog( "core destroy started\n" );
 
-  core::input::destroy();
-
-  // render subsystem shutdown
+  logic::destroy();
+  input::destroy();
   render::destroy();
-
-  // data subsystem shutdown
   data::destroy();
 
   // SDL2 shutdown

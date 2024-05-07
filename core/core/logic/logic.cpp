@@ -5,14 +5,27 @@ using namespace core;
 
 namespace
 {
+  struct StaticData
+  {
+    StringIdMap<logic::ComponentFabric> componentFabrics;
+  };
 
-}
+  StaticData* sData = nullptr;
+} // namespace
 
 
 Entity::Entity( StringId id, Scene* scene )
     : id_( id )
     , scene_( scene )
 {
+}
+
+Entity ::~Entity()
+{
+  for( auto& it: components_ )
+  {
+    delete it.ptr;
+  }
 }
 
 void Entity::init()
@@ -75,6 +88,7 @@ Component::~Component()
   // TODO: unregister from entity???
 }
 
+void Component::deserialize( const Json::object_t& obj ) { ( void ) obj; }
 void Component::init() {}
 void Component::shutdown() {}
 void Component::update( const system::DeltaTime& dt ) { ( void ) dt; }
@@ -118,4 +132,31 @@ Entity* Scene::addEntity( StringId id )
   assert( !initialized_ ); // can't add entities after init() started
   entities_.emplace_back( id, this );
   return &*entities_.rbegin();
+}
+
+
+Status logic::init()
+{
+  sData = new StaticData();
+  return StatusOk;
+}
+
+void logic::destroy()
+{
+  delete sData;
+}
+
+void logic::registerComponent( StringId componentId, ComponentFabric componentFabric )
+{
+  mCoreLog( "register component " mFmtStringHash "\n", componentId.getHash() );
+  auto [_, inserted] = sData->componentFabrics.try_emplace( componentId, std::move( componentFabric ) );
+  assert( inserted );
+  ( void ) inserted;
+}
+
+Component* logic::instantiateComponent( StringId componentId, Entity* entity )
+{
+  auto* componentFabric = sData->componentFabrics.try_get( componentId );
+  assert( componentFabric );
+  return ( *componentFabric )( entity );
 }

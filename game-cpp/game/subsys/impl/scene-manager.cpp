@@ -8,9 +8,8 @@ namespace
 {
   struct SceneInfo
   {
-    core::Scene                                scene;
-    std::vector<core::data::RenderChunkHandle> renderChunkHandles;
-    bool                                       isLoading = false;
+    core::Scene scene;
+    bool        isLoading = false;
   };
 
 
@@ -78,26 +77,27 @@ namespace
     {
       auto sceneId = StringId( name );
 
-      auto it = std::find_if( scenes_.begin(), scenes_.end(), [=]( SceneInfo& scene ) {
+      auto it = std::ranges::find_if( scenes_, [=]( SceneInfo& scene ) {
         return scene.scene.getId() == sceneId;
       } );
       if( it != scenes_.end() )
       {
-        mCoreLogError( "trying to load scene " mFmtU64 " which is already loaded\n", sceneId.getHash() );
+        mCoreLogError( "trying to load scene " mFmtStringHash " which is already loaded\n", sceneId.getHash() );
         return;
       }
 
-      mCoreLog( "loading scene " mFmtU64 "...\n", sceneId.getHash() );
+      mCoreLog( "loading scene " mFmtStringHash "...\n", sceneId.getHash() );
       auto* scene      = &scenes_.emplace_back( sceneId );
       scene->isLoading = true;
 
-      tasks::loadScene( name, [scene]( game::SceneInfo sceneInfo, std::vector<core::data::RenderChunkHandle> renderChunks ) {
-        scene->renderChunkHandles = std::move( renderChunks );
+      tasks::loadScene( name, [scene]( game::SceneInfo          sceneInfo,
+                                       core::data::RenderChunks renderChunks ) {
+        scene->scene.setRenderChunks( std::move( renderChunks ) );
 
         for( const auto& object: sceneInfo.objects )
         {
           auto* entity = scene->scene.addEntity( StringId( object.name ) );
-          instantiateComponents( *entity, object, scene->renderChunkHandles );
+          instantiateComponents( *entity, object );
         }
 
         scene->scene.init();
@@ -110,23 +110,23 @@ namespace
       auto sceneId = StringId( name );
 
       core::loopEnqueueDefferedTask( [this, sceneId]() {
-        auto it = std::find_if( scenes_.begin(), scenes_.end(), [=]( SceneInfo& scene ) {
+        auto it = std::ranges::find_if( scenes_, [=]( SceneInfo& scene ) {
           return scene.scene.getId() == sceneId;
         } );
 
         if( it == scenes_.end() )
         {
-          mCoreLogError( "trying to unload scene " mFmtU64 " which is not loaded\n", sceneId.getHash() );
+          mCoreLogError( "trying to unload scene " mFmtStringHash " which is not loaded\n", sceneId.getHash() );
           return;
         }
 
         if( it->isLoading )
         {
-          mCoreLogError( "trying to unload scene " mFmtU64 " which is loading\n", sceneId.getHash() );
+          mCoreLogError( "trying to unload scene " mFmtStringHash " which is loading\n", sceneId.getHash() );
           return;
         }
 
-        mCoreLog( "unloading scene " mFmtU64 "...\n", sceneId.getHash() );
+        mCoreLog( "unloading scene " mFmtStringHash "...\n", sceneId.getHash() );
         it->scene.shutdown();
         scenes_.erase( it );
       } );

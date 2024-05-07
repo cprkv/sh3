@@ -95,7 +95,8 @@ namespace
 
   RenderChunkData* findRenderChunk( StringId id )
   {
-    auto chunkIt = std::find_if( sData->renderChunks.begin(), sData->renderChunks.end(), [=]( RenderChunkData& data ) { return data.id == id; } );
+    auto chunkIt = std::find_if( sData->renderChunks.begin(), sData->renderChunks.end(),
+                                 [=]( RenderChunkData& data ) { return data.id == id; } );
     return chunkIt != sData->renderChunks.end() ? &*chunkIt : nullptr;
   }
 
@@ -152,7 +153,8 @@ namespace
 
   RenderChunkData& getOrAddRenderChunk( StringId id, const char* name )
   {
-    auto chunkIt = std::find_if( sData->renderChunks.begin(), sData->renderChunks.end(), [=]( RenderChunkData& data ) { return data.id == id; } );
+    auto chunkIt = std::find_if( sData->renderChunks.begin(), sData->renderChunks.end(),
+                                 [=]( RenderChunkData& data ) { return data.id == id; } );
     return chunkIt != sData->renderChunks.end()
                ? *chunkIt
                : addRenderChunk( id, name );
@@ -184,12 +186,12 @@ void data::updateRenderChunk()
   }
 
   sData->renderChunks.cleanup( []( RenderChunkData& renderChunk ) {
-    mCoreLog( "render chunk " mFmtU64 " removed\n", renderChunk.id.getHash() );
+    mCoreLog( "render chunk " mFmtStringHash " removed\n", renderChunk.id.getHash() );
   } );
 }
 
 
-void RenderChunkHandle::load( const char* name )
+void RenderChunk::load( const char* name )
 {
   // load is like init, only once can happen
   assert( !data_ );
@@ -202,28 +204,28 @@ void RenderChunkHandle::load( const char* name )
   data_ = &chunk;
 }
 
-bool RenderChunkHandle::isLoaded() const
+bool RenderChunk::isLoaded() const
 {
   if( !data_ || ref_.empty() )
     return false;
   return !data_->loading;
 }
 
-core::render::Material* RenderChunkHandle::getMaterial( StringId id )
+core::render::Material* RenderChunk::getMaterial( StringId id )
 {
   if( !isLoaded() )
     return nullptr;
   return data_->materials.get( id );
 }
 
-core::render::Mesh* RenderChunkHandle::getMesh( StringId id )
+core::render::Mesh* RenderChunk::getMesh( StringId id )
 {
   if( !isLoaded() )
     return nullptr;
   return data_->meshes.get( id );
 }
 
-core::render::Texture* RenderChunkHandle::getTexture( StringId id )
+core::render::Texture* RenderChunk::getTexture( StringId id )
 {
   if( !isLoaded() )
     return nullptr;

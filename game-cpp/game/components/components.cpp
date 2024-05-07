@@ -7,6 +7,27 @@ namespace
 {
   // temporary all components live here...
 
+  core::render::Mesh* findMesh( core::data::RenderChunksView renderChunks, StringId id )
+  {
+    for( auto& chunk: renderChunks )
+      if( auto* mesh = chunk.getMesh( id ) )
+        return mesh;
+
+    assert( false ); // mesh not found
+    return nullptr;
+  }
+
+  core::render::Texture* findTexture( core::data::RenderChunksView renderChunks, StringId id )
+  {
+    for( auto& chunk: renderChunks )
+      if( auto* mesh = chunk.getTexture( id ) )
+        return mesh;
+
+    assert( false ); // texture not found
+    return nullptr;
+  }
+
+
   class TransformComponent : public core::Component
   {
   public:
@@ -22,6 +43,13 @@ namespace
              glm::toMat4( rotation ) *
              glm::scale( scale );
     }
+
+    void deserialize( const Json::object_t& obj ) override
+    {
+      obj.at( "position" ).get_to( position );
+      obj.at( "rotation" ).get_to( rotation );
+      obj.at( "scale" ).get_to( scale );
+    }
   };
 
 
@@ -34,6 +62,18 @@ namespace
     core::render::Texture* textureDiffuse;
     TransformComponent*    transform;
 
+    void deserialize( const Json::object_t& obj ) override
+    {
+      StringId meshId;
+      StringId textureDiffuseId;
+
+      obj.at( "mesh" ).get_to( meshId );
+      obj.at( "textureDiffuse" ).get_to( textureDiffuseId );
+
+      mesh           = findMesh( getEntity()->getScene()->getRenderChunks(), meshId );
+      textureDiffuse = findTexture( getEntity()->getScene()->getRenderChunks(), textureDiffuseId );
+    }
+
     void init() override
     {
       transform = getComponent<TransformComponent>();
@@ -45,40 +85,6 @@ namespace
       RenderManager::i->renderList.addMesh( mesh, textureDiffuse, transform->getWorldTransform() );
     }
   };
-
-
-  template<typename T>
-  const T* findShComponent( const std::vector<std::unique_ptr<ShComponent>>& components )
-  {
-    T test;
-
-    for( const auto& component: components )
-      if( component->getType() == test.getType() )
-        return static_cast<T*>( component.get() );
-
-    return nullptr;
-  }
-
-
-  core::render::Mesh* findMesh( std::vector<core::data::RenderChunkHandle>& renderChunks, StringId id )
-  {
-    for( auto& chunk: renderChunks )
-      if( auto* mesh = chunk.getMesh( id ) )
-        return mesh;
-
-    assert( false ); // mesh not found
-    return nullptr;
-  }
-
-  core::render::Texture* findTexture( std::vector<core::data::RenderChunkHandle>& renderChunks, StringId id )
-  {
-    for( auto& chunk: renderChunks )
-      if( auto* mesh = chunk.getTexture( id ) )
-        return mesh;
-
-    assert( false ); // texture not found
-    return nullptr;
-  }
 } // namespace
 
 
@@ -144,28 +150,30 @@ void FreeFlyCameraComponent::update( const core::system::DeltaTime& dt )
 }
 
 
-void game::instantiateComponents( core::Entity& entity, const ShObjectInfo& objectInfo,
-                                  std::vector<core::data::RenderChunkHandle>& renderChunks )
+void game::instantiateComponents( core::Entity& entity, const ShObjectInfo& objectInfo )
 {
-  auto* transform = findShComponent<ShComponentTransform>( objectInfo.components );
-  auto* material  = findShComponent<ShComponentMaterial>( objectInfo.components );
-  auto* mesh      = findShComponent<ShComponentMesh>( objectInfo.components );
-
-  if( transform )
+  // TODO: this is developer's try-catch
+  try
   {
-    auto* c     = entity.addComponent<TransformComponent>();
-    c->position = transform->position;
-    c->rotation = transform->rotation;
-    c->scale    = transform->scale;
+    for( auto& component: objectInfo.components )
+    {
+      auto* componentInstance = core::logic::instantiateComponent( component.type, &entity );
+      componentInstance->deserialize( component.data );
+      entity.addComponent( component.type, componentInstance );
+    }
   }
-
-  if( material && mesh )
+  catch( std::exception& ex )
   {
-    auto* c           = entity.addComponent<RenderMeshComponent>();
-    c->mesh           = findMesh( renderChunks, mesh->id );
-    c->textureDiffuse = findTexture( renderChunks, material->diffuse );
-
-    assert( c->mesh );
-    assert( c->textureDiffuse );
+    mCoreLogError( "instantiate components on entity " mFmtStringHash " failed: %s\n",
+                   entity.getId().getHash(), ex.what() );
+    assert( false );
   }
+}
+
+
+void game::registerComponents()
+{
+  core::logic::registerComponent<TransformComponent>();
+  core::logic::registerComponent<RenderMeshComponent>();
+  core::logic::registerComponent<FreeFlyCameraComponent>();
 }

@@ -1,6 +1,7 @@
 #include "core/core.hpp"
 #include "core/system/system.hpp"
 #include "game/subsys/subsys.hpp"
+#include "game/components/components.hpp"
 
 
 int main( int, char** )
@@ -11,6 +12,7 @@ int main( int, char** )
   if( auto s = game::subsysInit(); s != StatusOk )
     core::system::fatalError( "Game initialization failed: %d %s", ( int ) s, core::getErrorDetails() );
 
+  game::registerComponents();
   game::SceneManager::i->loadScene( "maps/debug/cs-arrows" );
   game::SceneManager::i->loadScene( "X0/MR1F-MFA/mr1f-pp" );
 

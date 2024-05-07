@@ -1,6 +1,7 @@
 #pragma once
 #include "core/common.hpp"
 #include "core/system/time.hpp"
+#include "core/data/render-chunk.hpp"
 
 namespace core
 {
@@ -26,6 +27,7 @@ namespace core
 
   public:
     Entity( StringId id, Scene* scene );
+    ~Entity();
 
     StringId getId() const { return id_; }
     Scene*   getScene() const { return scene_; }
@@ -61,6 +63,7 @@ namespace core
 
     Entity* getEntity() const { return entity_; }
 
+    virtual void deserialize( const Json::object_t& obj );
     virtual void init();
     virtual void shutdown();
     virtual void update( const system::DeltaTime& dt );
@@ -86,8 +89,9 @@ namespace core
   // TODO!: world logic which persistent..
   class Scene
   {
-    StringId          id_;
-    std::list<Entity> entities_;
+    StringId           id_;
+    std::list<Entity>  entities_;
+    data::RenderChunks renderChunks_;
 
 #ifdef _DEBUG
     bool initialized_ = false;
@@ -103,10 +107,34 @@ namespace core
     void    update( const system::DeltaTime& dt );
     Entity* addEntity( StringId id );
 
+    data::RenderChunksView getRenderChunks() { return renderChunks_; }
+    void                   setRenderChunks( data::RenderChunks renderChunks ) { renderChunks_ = renderChunks; }
+
     // TODO: it looks weird...
     auto entitiesIteratorBegin() { return entities_.begin(); }
     auto entitiesIteratorEnd() { return entities_.end(); }
   };
+
+
+  namespace logic
+  {
+    Status init();
+    void   destroy();
+
+    using ComponentFabric = std::function<Component*( Entity* )>;
+
+    void       registerComponent( StringId componentId, ComponentFabric componentFabric );
+    Component* instantiateComponent( StringId componentId, Entity* entity );
+
+    template<typename TComponent>
+    void registerComponent()
+    {
+      auto fabric = []( Entity* entity ) -> Component* {
+        return new TComponent( entity );
+      };
+      registerComponent( TComponent::getComponentId(), std::move( fabric ) );
+    }
+  } // namespace logic
 } // namespace core
 
 

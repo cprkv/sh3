@@ -83,9 +83,10 @@ namespace
 } // namespace
 
 
-void input::initialize()
+Status input::init()
 {
   sData = new StaticData();
+  return StatusOk;
 }
 
 void input::destroy()

@@ -216,23 +216,17 @@ def path_without_extension(path):
 def get_object_components(obj, mesh_info: ShMeshInfo) -> List[ShComponent]:
   obj.rotation_mode = 'QUATERNION'
 
-  components: List[ShComponent] = []
-
-  transform: ShTransformComponent = {'$type': SH_COMPONENT_TRANSFORM,
-                                     'position': vec_to_map(obj.location),
+  transform: ShComponent = {'type': SH_COMPONENT_TRANSFORM,
+                            'data': {'position': vec_to_map(obj.location),
                                      'rotation': quat_to_map(obj.rotation_quaternion),
-                                     'scale': vec_to_map(obj.scale)}
-  components.append(transform)
-
-  mesh: ShMeshComponent = {'$type': SH_COMPONENT_MESH,
-                           'name': mesh_info['name']}
-  components.append(mesh)
+                                     'scale': vec_to_map(obj.scale)}}
 
   diffuse_path = path_without_extension(mesh_info['material_info']['diffuse']['path']['path'])
-  material: ShMaterialComponent = {'$type': SH_COMPONENT_MATERIAL,
-                                   'diffuse': diffuse_path}
-  components.append(material)
+  render_mesh: ShComponent = {'type': SH_COMPONENT_RENDER_MESH,
+                              'data': {'mesh': string_hash(mesh_info['name']),
+                                       'textureDiffuse': string_hash(diffuse_path)}}
 
+  components: List[ShComponent] = [transform, render_mesh]
   return components
 
 

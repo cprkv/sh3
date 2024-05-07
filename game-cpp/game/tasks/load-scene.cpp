@@ -32,7 +32,7 @@ void game::tasks::loadScene( const std::string& name, LoadSceneAction action )
   } );
 
 
-  auto task = [renderChunks = std::vector<core::data::RenderChunkHandle>(),
+  auto task = [renderChunks = core::data::RenderChunks(),
                action       = std::move( action ),
                loadSceneInfoTask]() mutable -> core::PeriodicalStatus {
     // wait json is loaded
@@ -56,8 +56,7 @@ void game::tasks::loadScene( const std::string& name, LoadSceneAction action )
     // wait until render chunks ready
     if( renderChunks.size() )
     {
-      auto allLoaded = std::all_of( renderChunks.begin(), renderChunks.end(),
-                                    []( const auto& chunk ) { return chunk.isLoaded(); } );
+      auto allLoaded = std::ranges::all_of( renderChunks, []( const auto& chunk ) { return chunk.isLoaded(); } );
       if( !allLoaded )
         return core::PeriodicalStatusContinue;
     }

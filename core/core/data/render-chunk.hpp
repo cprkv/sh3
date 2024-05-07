@@ -10,7 +10,7 @@ namespace core::data
   void   updateRenderChunk();
 
 
-  class RenderChunkHandle
+  class RenderChunk
   {
     RefCounter              ref_;
     struct RenderChunkData* data_ = nullptr;
@@ -23,4 +23,8 @@ namespace core::data
     core::render::Mesh*     getMesh( StringId id );
     core::render::Texture*  getTexture( StringId id );
   };
+
+  using RenderChunks     = std::vector<data::RenderChunk>;
+  using RenderChunksView = std::span<data::RenderChunk>;
+
 } // namespace core::data

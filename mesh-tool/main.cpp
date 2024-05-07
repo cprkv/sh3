@@ -125,19 +125,19 @@ try
 
 // TODO: write tests
 #if 0
-  printf( "string id for \"\" = " mFmtU64 "\n",
+  printf( "string id for \"\" = " mFmtStringHash "\n",
           core::data::StringId( "" ).getHash() );
-  printf( "string id for \"hallo wrodl!\" = " mFmtU64 "\n",
+  printf( "string id for \"hallo wrodl!\" = " mFmtStringHash "\n",
           core::data::StringId( "hallo wrodl!" ).getHash() );
-  printf( "string id for \"mr1f_8_0_0_0_0x00071df0_f0\" = " mFmtU64 "\n",
+  printf( "string id for \"mr1f_8_0_0_0_0x00071df0_f0\" = " mFmtStringHash "\n",
           core::data::StringId( "mr1f_8_0_0_0_0x00071df0_f0" ).getHash() );
-  printf( "string id for \"X0/MR1F-MFA/mr1f.map-i2\" = " mFmtU64 "\n",
+  printf( "string id for \"X0/MR1F-MFA/mr1f.map-i2\" = " mFmtStringHash "\n",
           core::data::StringId( "X0/MR1F-MFA/mr1f.map-i2" ).getHash() );
-  printf( "string id for \"X0/MR1F-MFA/mr1f-pp\" = " mFmtU64 "\n",
+  printf( "string id for \"X0/MR1F-MFA/mr1f-pp\" = " mFmtStringHash "\n",
           core::data::StringId( "X0/MR1F-MFA/mr1f-pp" ).getHash() );
-  printf( "string id for \"X0/MR1F-MFA/mr2f-pp\" = " mFmtU64 "\n",
+  printf( "string id for \"X0/MR1F-MFA/mr2f-pp\" = " mFmtStringHash "\n",
           core::data::StringId( "X0/MR1F-MFA/mr2f-pp" ).getHash() );
-  printf( "string id for \"X0/MR1F-MFA/mr2e-pp\" = " mFmtU64 "\n",
+  printf( "string id for \"X0/MR1F-MFA/mr2e-pp\" = " mFmtStringHash "\n",
           core::data::StringId( "X0/MR1F-MFA/mr2e-pp" ).getHash() );
 #endif
 

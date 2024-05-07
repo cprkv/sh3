@@ -33,6 +33,7 @@
 #include <variant>
 #include <chrono>
 #include <filesystem>
+#include <ranges>
 
 #include <cstdio>
 #include <cstdlib>
@@ -67,6 +68,8 @@
 #define mFmtS32 "%" PRId32
 #define mFmtS64 "%" PRId64
 #define mFmtF32 "%f"
+
+#define mFmtStringHash "0x%016llX"
 
 #define mFmtVec2 "(%02.3f %02.3f)"
 #define mFmtVec2Value( a ) a.x, a.y
@@ -587,7 +590,34 @@ using StringIdMap = emhash8::HashMap<StringId, T, StringId::Hash, StringId::Equa
 template<typename T>
 using StringIdMultiMap = std::unordered_multimap<StringId, T, StringId::Hash, StringId::EqualTo>;
 
-constexpr StringId operator""_sid( const char* str, size_t size )
+constexpr StringId operator""_sid( const char* str, std::size_t size )
 {
   return { std::string_view( str, size ) };
 }
+
+
+namespace glm
+{
+  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE( vec3, x, y, z );
+  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE( vec4, x, y, z, w );
+  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE( fquat, x, y, z, w );
+} // namespace glm
+
+namespace nlohmann
+{
+  template<>
+  struct adl_serializer<StringId>
+  {
+    static void to_json( json& j, const StringId& p )
+    {
+      j = p.getHash();
+    }
+
+    static void from_json( const json& j, StringId& p )
+    {
+      StringHash hash;
+      j.get_to( hash );
+      p = StringId( hash );
+    }
+  };
+} // namespace nlohmann
