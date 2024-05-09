@@ -68,6 +68,9 @@ function(vy_configure_compiler target)
     $<$<CXX_COMPILER_ID:GNU>:-fanalyzer>
     $<${release_msvc}:/guard:cf>
   )
+  target_compile_definitions(${PROJECT_NAME} PUBLIC
+    $<${is_debug}:_DEBUG>
+  )
 endfunction()
 
 

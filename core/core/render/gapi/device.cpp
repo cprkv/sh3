@@ -1,5 +1,6 @@
 #include "core/render/gapi/device.hpp"
 #include "core/utils.hpp"
+#include <dxgi1_6.h>
 
 using namespace core::render;
 using namespace core::render::gapi;
@@ -51,6 +52,58 @@ namespace
 
     AddVectoredExceptionHandler( TRUE, exceptionHandler );
   }
+
+
+  struct AdapterInfo
+  {
+    std::string           name;
+    ComPtr<IDXGIAdapter1> adapter;
+  };
+
+  using AdaptersInfo = std::list<AdapterInfo>;
+
+  Status getAdaptersInfo( IDXGIFactory1* factory, AdaptersInfo& out )
+  {
+    auto adapter = ComPtr<IDXGIAdapter1>();
+
+    for( UINT adapterIndex = 0;
+         gDevice->dxgiFactory->EnumAdapters1( adapterIndex, adapter.ReleaseAndGetAddressOf() ) != DXGI_ERROR_NOT_FOUND;
+         adapterIndex++ )
+    {
+      auto desc = DXGI_ADAPTER_DESC{};
+      mCoreCheckHR( adapter->GetDesc( &desc ) );
+      out.emplace_back( AdapterInfo{
+          .name    = convertWideStringToMultiByte( desc.Description ).value(),
+          .adapter = std::move( adapter ),
+      } );
+    }
+
+    if( !out.size() )
+    {
+      core::setErrorDetails( "no 3D adapter available" );
+      return StatusSystemError;
+    }
+
+    return StatusOk;
+  }
+
+  AdapterInfo selectAdapter( const AdaptersInfo& adapters, const std::optional<std::string>& selectedGpu )
+  {
+    if( selectedGpu )
+    {
+      auto it = std::ranges::find_if( adapters, [&]( const auto& ai ) { return ai.name == *selectedGpu; } );
+      if( it != adapters.end() )
+      {
+        mCoreLog( "selected adapter found: %s\n", selectedGpu->c_str() );
+        return *it;
+      }
+
+      mCoreLogError( "selected gpu not found...\n" );
+    }
+
+    mCoreLog( "default adapter selected: %s\n", adapters.begin()->name.c_str() );
+    return *adapters.begin();
+  }
 } // namespace
 
 
@@ -58,10 +111,19 @@ Status Device::init( HWND window )
 {
   mCoreCheckHR( CreateDXGIFactory1( __uuidof( IDXGIFactory1 ), ( void** ) &dxgiFactory ) );
 
+  // select adapter
+  ComPtr<IDXGIAdapter1> adapter;
+  {
+    // TODO: get from config and save after selected
+    auto adapters = AdaptersInfo();
+    mCoreCheckStatus( getAdaptersInfo( dxgiFactory.Get(), adapters ) );
+    auto adapterInfo = selectAdapter( adapters, "NVIDIA GeForce RTX 3050 Laptop GPU" );
+    adapter          = std::move( adapterInfo.adapter );
+  }
+
   // create device
   {
-    IDXGIAdapter*   adapter    = nullptr;
-    D3D_DRIVER_TYPE driverType = D3D_DRIVER_TYPE_HARDWARE;
+    D3D_DRIVER_TYPE driverType = D3D_DRIVER_TYPE_UNKNOWN;
     HMODULE         software   = nullptr;
 
     UINT flags = D3D11_CREATE_DEVICE_SINGLETHREADED; // TODO: debug layer not found on win11
@@ -76,7 +138,7 @@ Status Device::init( HWND window )
     D3D_FEATURE_LEVEL featureLevel; // output
 
     mCoreCheckHR( D3D11CreateDevice(
-        adapter, driverType, software, flags, featureLevels, featureLevelsCount, sdkVersion,
+        adapter.Get(), driverType, software, flags, featureLevels, featureLevelsCount, sdkVersion,
         &device, &featureLevel, &context ) );
 
     if( featureLevel != D3D_FEATURE_LEVEL_11_0 )
@@ -267,4 +329,3 @@ void Device::enableAlphaBlending( bool enable )
     context->OMSetBlendState( nullptr, nullptr, mask );
   }
 }
-

@@ -1,6 +1,6 @@
 $previousDir = $(Get-Location)
 
-$prefixPath = "F:\sh3-tools\RESOURCES1"
+$prefixPath = $env:SH3_RESOURCES
 
 try {
   Set-Location "$PSScriptRoot/../blender"
