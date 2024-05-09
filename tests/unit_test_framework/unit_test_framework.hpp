@@ -1,6 +1,8 @@
 #ifndef UNIT_TEST_FRAMEWORK_HPP
 #define UNIT_TEST_FRAMEWORK_HPP
 
+#define UNIT_TEST_ENABLE_REGEXP 0
+
 #include <map>
 #include <utility>
 #include <string>

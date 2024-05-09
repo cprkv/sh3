@@ -7,10 +7,10 @@
 int main( int, char** )
 {
   if( auto s = core::initialize(); s != StatusOk )
-    core::system::fatalError( "Core initialization failed: %d %s", ( int ) s, core::getErrorDetails() );
+    core::system::fatalError( "Core initialization failed: %d %s", static_cast<int>( s ), core::getErrorDetails() );
 
   if( auto s = game::subsysInit(); s != StatusOk )
-    core::system::fatalError( "Game initialization failed: %d %s", ( int ) s, core::getErrorDetails() );
+    core::system::fatalError( "Game initialization failed: %d %s", static_cast<int>( s ), core::getErrorDetails() );
 
   game::registerComponents();
   game::SceneManager::i->loadScene( "maps/debug/cs-arrows" );
@@ -18,7 +18,7 @@ int main( int, char** )
 
   for( ;; )
   {
-     if( auto loopStatus = core::loopStepBegin();
+    if( auto loopStatus = core::loopStepBegin();
         loopStatus == core::LoopStatusQuitRequested )
       break;
 

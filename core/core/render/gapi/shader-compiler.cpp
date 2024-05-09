@@ -12,19 +12,14 @@ using namespace core::render::gapi;
 
 namespace
 {
-  Status shaderTypeToProfileName( ShaderType shaderType, const char*& out )
+  const char* shaderTypeToProfileName( ShaderType shaderType )
   {
     switch( shaderType )
     {
       case ShaderTypeVertex:
-        out = "vs_5_0";
-        return StatusOk;
+        return "vs_5_0";
       case ShaderTypePixel:
-        out = "ps_5_0";
-        return StatusOk;
-      default:
-        core::setErrorDetails( "unsupported shader type" );
-        return StatusSystemError;
+        return "ps_5_0";
     }
   }
 
@@ -36,6 +31,8 @@ namespace
     explicit IncludeHandler( std::string directory )
         : directory_{ std::move( directory ) }
     {}
+
+    virtual ~IncludeHandler() = default;
 
     __declspec( nothrow ) HRESULT __stdcall Open(
         D3D_INCLUDE_TYPE includeType,
@@ -66,7 +63,7 @@ namespace
       }
 
       *ppData = bytes;
-      *pBytes = ( UINT ) f.getSize();
+      *pBytes = static_cast<UINT>( f.getSize() );
 
       return S_OK;
     }
@@ -103,16 +100,13 @@ Status render::gapi::compileShader( const char*      directory,
   flags |= D3DCOMPILE_DEBUG;
 #endif
 
-  const D3D_SHADER_MACRO defines[] = { nullptr, nullptr };
+  const D3D_SHADER_MACRO defines[] = { { nullptr, nullptr } };
 
   auto shaderBlob = ComPtr<ID3DBlob>{};
   auto errorBlob  = ComPtr<ID3DBlob>{};
 
-  const char* profile;
-  if( auto s = shaderTypeToProfileName( shaderType, profile ); s != StatusOk )
-    return s;
-
-  auto includeHandler = IncludeHandler{ directory };
+  const char* profile        = shaderTypeToProfileName( shaderType );
+  auto        includeHandler = IncludeHandler{ directory };
 
   auto hrr = ::D3DCompile( bytes.data(), bytes.size(),
                            name, defines, &includeHandler,
@@ -120,7 +114,8 @@ Status render::gapi::compileShader( const char*      directory,
 
   if( errorBlob.Get() && errorBlob->GetBufferSize() )
   {
-    auto errorMessage = std::string_view( ( char* ) errorBlob->GetBufferPointer(), errorBlob->GetBufferSize() );
+    auto errorMessage = std::string_view( static_cast<char*>( errorBlob->GetBufferPointer() ),
+                                          errorBlob->GetBufferSize() );
     core::setErrorDetails( "error compiling shader: " mFmtS, mFmtSValue( errorMessage ) );
     return StatusSystemError;
   }
@@ -134,7 +129,7 @@ Status render::gapi::compileShader( const char*      directory,
   mCoreCheckHR( hrr );
 
   out = std::vector<u8>(
-      ( u8* ) shaderBlob->GetBufferPointer(),
-      ( u8* ) shaderBlob->GetBufferPointer() + shaderBlob->GetBufferSize() );
+      static_cast<u8*>( shaderBlob->GetBufferPointer() ),
+      static_cast<u8*>( shaderBlob->GetBufferPointer() ) + shaderBlob->GetBufferSize() );
   return StatusOk;
 }

@@ -1,6 +1,6 @@
 #include "core/system/system.hpp"
 #include "core/common.hpp"
-#include <Windows.h>
+#include <windows.h>
 #include <cstdlib>
 
 using namespace core;

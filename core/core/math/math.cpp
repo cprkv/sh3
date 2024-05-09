@@ -21,7 +21,7 @@ void SphereStraightRotation::rotate( f32 upRotationDelta, f32 rightRotationDelta
   auto rightZ   = glm::rotateZ( right_, upRotationDelta );
   auto forwardX = glm::rotate( forwardZ, rightRotationDelta, rightZ );
 
-  if( fabsf( forwardX.z ) <= 0.99 )
+  if( fabsf( forwardX.z ) <= 0.99f )
   {
     direction_ = forwardX;
     right_     = rightZ;

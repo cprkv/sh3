@@ -58,8 +58,6 @@ namespace
         return "Normal";
       case ImageUsage::Roughness:
         return "Roughness";
-      default:
-        return "<unknown>";
     }
   }
 
@@ -216,7 +214,7 @@ namespace
   ImageUsage chooseImageUsage( ImageUsage a, ImageUsage b )
   {
     using U = std::underlying_type_t<ImageUsage>;
-    return ( ImageUsage ) std::max( ( U ) a, ( U ) b );
+    return static_cast<ImageUsage>( std::max( static_cast<U>( a ), static_cast<U>( b ) ) );
   }
 
 
@@ -274,7 +272,7 @@ namespace
     texture.result.height    = static_cast<u32>( metaData.height );
     texture.result.mipLevels = static_cast<u32>( metaData.mipLevels );
     texture.result.arraySize = static_cast<u32>( metaData.arraySize );
-    texture.result.format    = metaData.format;
+    texture.result.format    = static_cast<u32>( metaData.format );
   }
 } // namespace
 

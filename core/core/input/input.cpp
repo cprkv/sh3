@@ -22,7 +22,7 @@ namespace
 #undef mXCheckKey
   }
 
-  const char* keyModToString( KeyMod mod )
+  [[maybe_unused]] const char* keyModToString( KeyMod mod )
   {
 #define mXSwitchKeyMod( keyMod, sdlKeyMod ) \
   case keyMod:                              \
@@ -31,8 +31,6 @@ namespace
     switch( mod )
     {
       mXKeyMod( mXSwitchKeyMod );
-      default:
-        return "<unknown>";
     }
 
 #undef mXSwitchKeyMod
@@ -124,7 +122,7 @@ void input::handle( SDL_Event& e )
     }
   }
 
-  setSdlKeyMod( ( SDL_Keymod ) e.key.keysym.mod );
+  setSdlKeyMod( static_cast<SDL_Keymod>( e.key.keysym.mod ) );
 }
 
 bool input::isKeyPressed( Key k )

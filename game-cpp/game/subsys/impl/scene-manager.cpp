@@ -137,4 +137,10 @@ namespace
 } // namespace
 
 
+// TODO: make these definitions
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-prototypes"
+
 SceneManager* gMakeSceneManager() { return new SceneManagerImpl(); }
+
+#pragma GCC diagnostic pop

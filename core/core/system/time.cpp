@@ -11,13 +11,13 @@ void Stopwatch::reset()
 u64 Stopwatch::getMs()
 {
   auto timeDiff = Clock::now() - begin_;
-  return std::chrono::duration_cast<std::chrono::milliseconds>( timeDiff ).count();
+  return static_cast<u64>( std::chrono::duration_cast<std::chrono::milliseconds>( timeDiff ).count() );
 }
 
 u64 Stopwatch::getUs()
 {
   auto timeDiff = Clock::now() - begin_;
-  return std::chrono::duration_cast<std::chrono::microseconds>( timeDiff ).count();
+  return static_cast<u64>( std::chrono::duration_cast<std::chrono::microseconds>( timeDiff ).count() );
 }
 
 
@@ -29,6 +29,6 @@ void DeltaTime::onLoopStart()
 void DeltaTime::onLoopEnd()
 {
   us_  = sw_.getUs();
-  msf_ = ( f32 ) us_ / 1000.f;
-  ms_  = ( u32 ) ceilf( msf_ );
+  msf_ = static_cast<f32>( us_ ) / 1000.f;
+  ms_  = static_cast<u32>( ceilf( msf_ ) );
 }

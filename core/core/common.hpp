@@ -138,6 +138,8 @@ enum Status
 
 namespace core
 {
+  void        commonInit();
+  void        commonDestroy();
   std::string formatMessage( const char* fmt, va_list args );
   const char* getErrorDetails();
   void        setErrorDetails( const char* message, ... );

@@ -14,13 +14,13 @@ namespace core::system
 
     void push( T value )
     {
-      auto lock = std::lock_guard{ mutex_ };
+      auto lock = std::lock_guard( mutex_ );
       container_.emplace( std::move( value ) );
     }
 
     std::optional<T> tryPop()
     {
-      auto lock = std::lock_guard{ mutex_ };
+      auto lock = std::lock_guard( mutex_ );
       if( container_.empty() )
         return std::nullopt;
       auto v = std::move( container_.front() );
@@ -40,13 +40,13 @@ namespace core::system
 
     void push( T value )
     {
-      auto lock = std::lock_guard{ mutex_ };
+      auto lock = std::lock_guard( mutex_ );
       container_.emplace( std::move( value ) );
     }
 
     std::optional<T> tryPop()
     {
-      auto lock = std::lock_guard{ mutex_ };
+      auto lock = std::lock_guard( mutex_ );
       if( container_.empty() )
         return std::nullopt;
       auto v = std::move( container_.top() );

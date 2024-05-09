@@ -203,7 +203,8 @@ Status fs::findFileUp( const stdfs::path& baseDirectory, const stdfs::path& file
     }
   }
 
-  return StatusNotFound;
+  // TODO: this is unreachable, but should be!
+  //return StatusNotFound;
 }
 
 

@@ -29,7 +29,7 @@ namespace
       if( exceptionRecord->NumberParameters < 2 )
         return EXCEPTION_CONTINUE_SEARCH;
 
-      auto stringLength = ( ULONG ) exceptionRecord->ExceptionInformation[0];
+      auto stringLength = static_cast<ULONG>( exceptionRecord->ExceptionInformation[0] );
       auto stringPtr    = exceptionRecord->ExceptionInformation[1];
 
       if( exceptionRecord->ExceptionCode == DBG_PRINTEXCEPTION_C )
@@ -67,7 +67,7 @@ namespace
     auto adapter = ComPtr<IDXGIAdapter1>();
 
     for( UINT adapterIndex = 0;
-         gDevice->dxgiFactory->EnumAdapters1( adapterIndex, adapter.ReleaseAndGetAddressOf() ) != DXGI_ERROR_NOT_FOUND;
+         factory->EnumAdapters1( adapterIndex, adapter.ReleaseAndGetAddressOf() ) != DXGI_ERROR_NOT_FOUND;
          adapterIndex++ )
     {
       auto desc = DXGI_ADAPTER_DESC{};
@@ -109,7 +109,7 @@ namespace
 
 Status Device::init( HWND window )
 {
-  mCoreCheckHR( CreateDXGIFactory1( __uuidof( IDXGIFactory1 ), ( void** ) &dxgiFactory ) );
+  mCoreCheckHR( CreateDXGIFactory1( __uuidof( IDXGIFactory1 ), static_cast<void**>( &dxgiFactory ) ) );
 
   // select adapter
   ComPtr<IDXGIAdapter1> adapter;
@@ -133,7 +133,7 @@ Status Device::init( HWND window )
     // flags |= D3D11_CREATE_DEVICE_BGRA_SUPPORT; // for sciter
 
     D3D_FEATURE_LEVEL featureLevels[]    = { D3D_FEATURE_LEVEL_11_0 };
-    UINT              featureLevelsCount = ( UINT ) std::size( featureLevels );
+    UINT              featureLevelsCount = static_cast<UINT>( std::size( featureLevels ) );
     UINT              sdkVersion         = D3D11_SDK_VERSION;
     D3D_FEATURE_LEVEL featureLevel; // output
 
@@ -305,7 +305,9 @@ Status Device::logMessages()
         break;
     }
 
-    mCoreLog( "[render][%s][%s] %.*s", severity, category, ( int ) messagePtr->DescriptionByteLength, messagePtr->pDescription );
+    mCoreLog( "[render][%s][%s] %.*s", severity, category,
+              static_cast<int>( messagePtr->DescriptionByteLength ),
+              messagePtr->pDescription );
   }
 
   infoQueue->ClearStoredMessages();

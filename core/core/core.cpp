@@ -97,6 +97,7 @@ namespace
 
 Status core::initialize()
 {
+  commonInit();
   sData = new StaticData();
   mCoreCheckStatus( initSDL() );
   mCoreCheckStatus( initData() );
@@ -130,6 +131,8 @@ void core::destroy()
     sData->threadPool.purge();
     delete sData;
   }
+
+  commonDestroy();
 }
 
 

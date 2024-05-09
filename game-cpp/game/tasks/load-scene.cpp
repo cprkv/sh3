@@ -41,7 +41,9 @@ void game::tasks::loadScene( const std::string& name, LoadSceneAction action )
 
     if( loadSceneInfoTask->status != StatusOk )
     {
-      mCoreLogError( "error loading scene json: %d %s\n", ( int ) *loadSceneInfoTask->status, core::getErrorDetails() );
+      mCoreLogError( "error loading scene json: %d %s\n",
+                     static_cast<int>( *loadSceneInfoTask->status ),
+                     core::getErrorDetails() );
       return core::PeriodicalStatusStop;
     }
 

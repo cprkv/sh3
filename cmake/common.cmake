@@ -56,10 +56,29 @@ function(vy_configure_compiler target)
   set(is_release "$<NOT:${is_debug}>")
   set(debug_msvc "$<AND:${is_msvc},${is_debug}>")
   set(release_msvc "$<AND:${is_msvc},${is_release}>")
+  set(is_gnu_like "$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>")
+
+  set(setup_gnu_warnings
+
+    # disable warnings
+    -Wno-c++98-compat -Wno-c++98-compat-pedantic
+    -Wno-pre-c++14-compat -Wno-c++14-compat
+    -Wno-pre-c++17-compat
+    -Wno-pre-c++20-compat
+    -Wno-extra-semi -Wno-extra-semi-stmt
+    -Wno-language-extension-token
+    -Wno-ctad-maybe-unsupported
+    -Wno-unsafe-buffer-usage # we dont do rust here
+
+    # not errors, but still warnings
+    -Wno-error=switch-enum
+    -Wno-error=shadow-uncaptured-local
+  )
 
   target_compile_options(${PROJECT_NAME} PUBLIC
     $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
-    $<$<CXX_COMPILER_ID:GNU>:-Wall -Wextra -Wshadow -Wconversion -Wpedantic -Werror -fanalyzer>
+    $<$<CXX_COMPILER_ID:GNU>:-fanalyzer>
+    $<${is_gnu_like}:-Wall -Wextra -Wshadow -Wconversion -Wpedantic -Werror ${setup_gnu_warnings}>
     #$<${debug_msvc}:/ZI>
     $<${release_msvc}:/guard:cf>
   )

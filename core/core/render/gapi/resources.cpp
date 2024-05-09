@@ -18,8 +18,8 @@ namespace
     if( !GetClientRect( window, &windowRect ) )
       return StatusSystemError;
 
-    UINT width  = windowRect.right - windowRect.left;
-    UINT height = windowRect.bottom - windowRect.top;
+    UINT width  = static_cast<UINT>( windowRect.right - windowRect.left );
+    UINT height = static_cast<UINT>( windowRect.bottom - windowRect.top );
 
     if( width == 0 ) width = 16;
     if( height == 0 ) height = 16;
@@ -82,7 +82,7 @@ Status ConstantBuffer::init( ArrayBytesView bytes, ConstantBufferTarget initTarg
   assert( !buffer );
   assert( bytes.getSize() == 1 );
   auto bufferDesc = D3D11_BUFFER_DESC{
-      .ByteWidth           = ( UINT ) ( bytes.getElementSize() * bytes.getSize() ),
+      .ByteWidth           = static_cast<UINT>( bytes.getElementSize() * bytes.getSize() ),
       .Usage               = D3D11_USAGE_DYNAMIC,
       .BindFlags           = D3D11_BIND_CONSTANT_BUFFER,
       .CPUAccessFlags      = D3D11_CPU_ACCESS_WRITE,
@@ -206,20 +206,20 @@ Status IndexBuffer::init( ArrayBytesView bytes )
   assert( bytes.getElementSize() == sizeof( u32 ) ||
           bytes.getElementSize() == sizeof( u16 ) );
   auto bufferDesc = D3D11_BUFFER_DESC{
-      .ByteWidth           = ( UINT ) ( bytes.getElementSize() * bytes.getSize() ),
+      .ByteWidth           = static_cast<UINT>( bytes.getElementSize() * bytes.getSize() ),
       .Usage               = D3D11_USAGE_IMMUTABLE,
       .BindFlags           = D3D11_BIND_INDEX_BUFFER,
       .CPUAccessFlags      = 0,
       .MiscFlags           = 0,
-      .StructureByteStride = ( UINT ) bytes.getElementSize(),
+      .StructureByteStride = static_cast<UINT>( bytes.getElementSize() ),
   };
   auto initialData = D3D11_SUBRESOURCE_DATA{
       .pSysMem          = bytes.getData(),
       .SysMemPitch      = 0,
       .SysMemSlicePitch = 0,
   };
-  elementSize  = ( UINT ) bytes.getElementSize();
-  elementCount = ( UINT ) bytes.getSize();
+  elementSize  = static_cast<UINT>( bytes.getElementSize() );
+  elementCount = static_cast<UINT>( bytes.getSize() );
   format       = bytes.getElementSize() == sizeof( u32 ) ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_R16_UINT;
   mCoreCheckHR( gDevice->device->CreateBuffer( &bufferDesc, &initialData, &buffer ) );
   return StatusOk;
@@ -238,20 +238,20 @@ void IndexBuffer::use() const
 Status VertexBuffer::init( ArrayBytesView bytes )
 {
   auto bufferDesc = D3D11_BUFFER_DESC{
-      .ByteWidth           = ( UINT ) ( bytes.getElementSize() * bytes.getSize() ),
+      .ByteWidth           = static_cast<UINT>( bytes.getElementSize() * bytes.getSize() ),
       .Usage               = D3D11_USAGE_IMMUTABLE,
       .BindFlags           = D3D11_BIND_VERTEX_BUFFER,
       .CPUAccessFlags      = 0,
       .MiscFlags           = 0,
-      .StructureByteStride = ( UINT ) bytes.getElementSize(),
+      .StructureByteStride = static_cast<UINT>( bytes.getElementSize() ),
   };
   auto initialData = D3D11_SUBRESOURCE_DATA{
       .pSysMem          = bytes.getData(),
       .SysMemPitch      = 0,
       .SysMemSlicePitch = 0,
   };
-  elementSize  = ( u32 ) bytes.getElementSize();
-  elementCount = ( u32 ) bytes.getSize();
+  elementSize  = static_cast<u32>( bytes.getElementSize() );
+  elementCount = static_cast<u32>( bytes.getSize() );
   mCoreCheckHR( gDevice->device->CreateBuffer( &bufferDesc, &initialData, &buffer ) );
   return StatusOk;
 }
@@ -294,10 +294,13 @@ Status VertexShader::init( ArrayBytesView bytes, VertexShaderLayout layout )
     };
   }
 
-  mCoreCheckHR( gDevice->device->CreateVertexShader(
-      bytes.getData(), ( UINT ) bytes.getSize(), nullptr, &vertexShader ) );
-  mCoreCheckHR( gDevice->device->CreateInputLayout(
-      desc, ( UINT ) descCount, bytes.getData(), ( UINT ) bytes.getSize(), &inputLayout ) );
+  mCoreCheckHR( gDevice->device->CreateVertexShader( bytes.getData(), static_cast<UINT>( bytes.getSize() ), nullptr,
+                                                     &vertexShader ) );
+
+  mCoreCheckHR( gDevice->device->CreateInputLayout( desc, static_cast<UINT>( descCount ),
+                                                    bytes.getData(), static_cast<UINT>( bytes.getSize() ),
+                                                    &inputLayout ) );
+
   return StatusOk;
 }
 
@@ -383,7 +386,7 @@ Status Texture::init( u32 width, u32 height, Vec4b* data )
   static_assert( sizeof( Vec4b ) == sizeof( u32 ) );
   auto subresourceData = D3D11_SUBRESOURCE_DATA{
       .pSysMem          = data,
-      .SysMemPitch      = ( UINT ) ( width * sizeof( Vec4b ) ), // R8G8B8A8 = 32-bit images = Vec4b
+      .SysMemPitch      = static_cast<UINT>( width * sizeof( Vec4b ) ), // R8G8B8A8 = 32-bit images = Vec4b
       .SysMemSlicePitch = 0u,
   };
   mCoreCheckHR( gDevice->device->CreateTexture2D( &textureDesc, &subresourceData, &texture ) );
@@ -403,7 +406,7 @@ Status Texture::init( data::schema::Texture& textureSchema )
       .Height         = textureSchema.height,
       .MipLevels      = textureSchema.mipLevels,
       .ArraySize      = 1u,
-      .Format         = ( DXGI_FORMAT ) textureSchema.format,
+      .Format         = static_cast<DXGI_FORMAT>( textureSchema.format ),
       .SampleDesc     = { .Count = 1, .Quality = 0 },
       .Usage          = D3D11_USAGE_DEFAULT,
       .BindFlags      = D3D11_BIND_SHADER_RESOURCE,
@@ -511,8 +514,8 @@ Status RenderTargetDefault::init()
 
 #ifdef _DEBUG
   auto name = std::string{ "RenderTargetDefault" };
-  backBuffer->SetPrivateData( WKPDID_D3DDebugObjectName, ( UINT ) name.size(), name.c_str() );
-  renderTargetView->SetPrivateData( WKPDID_D3DDebugObjectName, ( UINT ) name.size(), name.c_str() );
+  backBuffer->SetPrivateData( WKPDID_D3DDebugObjectName, static_cast<UINT>( name.size() ), name.c_str() );
+  renderTargetView->SetPrivateData( WKPDID_D3DDebugObjectName, static_cast<UINT>( name.size() ), name.c_str() );
 #endif
 
   return StatusOk;
@@ -525,7 +528,7 @@ Status RenderTargetDefault::reset()
 
   // TODO: this not works, because sciter holds internal buffer somehow?
   mCoreCheckHR( gDevice->viewport.swapChain->ResizeBuffers( 0, 0, 0, DXGI_FORMAT_UNKNOWN, 0 ) );
-  mCoreCheckHR( gDevice->viewport.swapChain->GetBuffer( 0, __uuidof( ID3D11Texture2D ), ( void** ) &backBuffer ) );
+  mCoreCheckHR( gDevice->viewport.swapChain->GetBuffer( 0, __uuidof( ID3D11Texture2D ), static_cast<void**>( &backBuffer ) ) );
   mCoreCheckHR( gDevice->device->CreateRenderTargetView( backBuffer.Get(), nullptr, &renderTargetView ) );
 
   auto desc = D3D11_TEXTURE2D_DESC{};
@@ -599,8 +602,8 @@ void Viewport::clear( Vec4 color )
 
 Status Viewport::present()
 {
-  UINT syncInterval = vsync ? 1 : 0;
-  UINT flags        = 0; // DXGI_PRESENT_...
+  UINT syncInterval = vsync ? 1u : 0u;
+  UINT flags        = 0u; // DXGI_PRESENT_...
   mCoreCheckHR( swapChain->Present( syncInterval, flags ) );
   return StatusOk;
 }

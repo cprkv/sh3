@@ -22,8 +22,5 @@ DXGI_FORMAT gapi::convertGPUFormatToDXGIFormat( GPUFormat format )
       return DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
     case GPUFormatR24G8Typeless:
       return DXGI_FORMAT_R24G8_TYPELESS;
-    default:
-      assert( false );
-      return DXGI_FORMAT_UNKNOWN;
   }
 }

@@ -78,8 +78,8 @@ namespace core::data
 
     struct RefOriginAdapter
     {
-      static TItem&       getRef( Collection::iterator it ) { return it->item; }
-      static const TItem& getRef( Collection::const_iterator it ) { return it->item; }
+      static TItem&       getRef( typename Collection::iterator it ) { return it->item; }
+      static const TItem& getRef( typename Collection::const_iterator it ) { return it->item; }
     };
 
     Collection collection_;

@@ -15,3 +15,9 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 target_link_libraries(${PROJECT_NAME} PRIVATE
   core
 )
+
+target_compile_options(${PROJECT_NAME} PRIVATE
+  -Wno-exit-time-destructors
+  -Wno-global-constructors
+  -Wno-float-equal
+)

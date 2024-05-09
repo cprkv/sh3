@@ -80,7 +80,7 @@ namespace
       assert( transform );
     }
 
-    void update( const core::system::DeltaTime& dt ) override
+    void update( const core::system::DeltaTime& ) override
     {
       RenderManager::i->renderList.addMesh( mesh, textureDiffuse, transform->getWorldTransform() );
     }
@@ -88,7 +88,7 @@ namespace
 } // namespace
 
 
-void FreeFlyCameraComponent::update( const core::system::DeltaTime& dt )
+void FreeFlyCameraComponent::update( const core::system::DeltaTime& )
 {
   {
     using namespace core::input;
