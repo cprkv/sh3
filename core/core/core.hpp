@@ -7,6 +7,7 @@
 #include "core/input/input.hpp"
 #include "core/math/math.hpp"
 #include "core/logic/logic.hpp"
+#include "core/utils.hpp"
 
 namespace core
 {
@@ -16,22 +17,10 @@ namespace core
     LoopStatusQuitRequested,
   };
 
-  enum PeriodicalStatus
-  {
-    PeriodicalStatusContinue,
-    PeriodicalStatusStop,
-  };
-
-  using Task           = std::move_only_function<void()>;
-  using PeriodicalTask = std::move_only_function<PeriodicalStatus()>;
-
   Status initialize();
   void   destroy();
 
   LoopStatus               loopStepBegin();
   void                     loopStepEnd();
-  void                     loopEnqueueDefferedTask( Task task );
-  void                     loopEnqueueTask( Task task );
-  void                     loopEnqueuePeriodicalTask( PeriodicalTask task );
   const system::DeltaTime& loopGetDeltaTime();
 } // namespace core

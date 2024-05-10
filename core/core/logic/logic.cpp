@@ -26,54 +26,40 @@ namespace
   // TODO: this is serialization heavy-dependent stuff, should be in data?
   //---------------------------------------------------------------
 
-  struct LoadSceneJsonTask
-  {
-    std::optional<Status> status = std::nullopt;
-    data::ShSceneInfo     result;
-  };
-
   using LoadSceneAction = std::function<void( data::ShSceneInfo, data::RenderChunks )>;
 
   void loadSceneTask( const std::string& name, LoadSceneAction action )
   {
-    auto sceneJsonPath     = data::getDataPath( ( name + ".scene.json" ).c_str() );
-    auto loadSceneInfoTask = std::make_shared<LoadSceneJsonTask>();
+    using enum system::task::PeriodicalStatus;
 
-    // TODO: parse smth is very common task to do, so it probably should be something simpler
-    loopEnqueueTask( [sceneJsonPath, loadSceneInfoTask]() mutable {
-      auto sceneInfo = data::ShSceneInfo();
-      auto status    = data::parseJsonFile( sceneJsonPath, sceneInfo );
+    auto sceneJsonPath = data::getDataPath( ( name + ".scene.json" ).c_str() );
 
-      loopEnqueueDefferedTask( [loadSceneInfoTask = std::move( loadSceneInfoTask ),
-                                sceneInfo         = std::move( sceneInfo ),
-                                status]() mutable {
-        loadSceneInfoTask->result = std::move( sceneInfo );
-        loadSceneInfoTask->status = status;
-      } );
-    } );
+    auto sceneJsonResult = system::task::runAsync1(
+        [sceneJsonPath]() mutable -> std::expected<data::ShSceneInfo, Status> {
+          return utils::turnIntoExpected( data::parseJsonFile, sceneJsonPath );
+        } );
 
-
-    auto task = [renderChunks = data::RenderChunks(),
-                 action       = std::move( action ),
-                 loadSceneInfoTask]() mutable -> PeriodicalStatus {
+    auto task = [renderChunks    = data::RenderChunks(),
+                 action          = std::move( action ),
+                 sceneJsonResult = std::move( sceneJsonResult )]() mutable {
       // wait json is loaded
-      if( !loadSceneInfoTask->status.has_value() )
+      if( !sceneJsonResult.isReady() )
         return PeriodicalStatusContinue;
 
-      if( loadSceneInfoTask->status != StatusOk )
+      if( !sceneJsonResult->has_value() )
       {
         mCoreLogError( "error loading scene json: %d %s\n",
-                       static_cast<int>( *loadSceneInfoTask->status ),
+                       static_cast<int>( sceneJsonResult->error() ),
                        getErrorDetails() );
         return PeriodicalStatusStop;
       }
 
       // queue load render chunks
-      if( renderChunks.size() != loadSceneInfoTask->result.render_chunks.size() )
+      if( renderChunks.size() != sceneJsonResult->value().render_chunks.size() )
       {
-        renderChunks.resize( loadSceneInfoTask->result.render_chunks.size() );
+        renderChunks.resize( sceneJsonResult->value().render_chunks.size() );
         for( size_t i = 0; i < renderChunks.size(); ++i )
-          renderChunks[i].load( loadSceneInfoTask->result.render_chunks[i].c_str() );
+          renderChunks[i].load( sceneJsonResult->value().render_chunks[i].c_str() );
       }
 
       // wait until render chunks ready
@@ -84,14 +70,14 @@ namespace
           return PeriodicalStatusContinue;
       }
 
-      action( std::move( loadSceneInfoTask->result ),
+      action( std::move( sceneJsonResult->value() ),
               std::move( renderChunks ) );
 
       mCoreLog( "loading scene task done!\n" );
       return PeriodicalStatusStop;
     };
 
-    loopEnqueuePeriodicalTask( std::move( task ) );
+    system::task::runPeriodical( std::move( task ) );
   }
 
   void instantiateComponents( Entity& entity, const data::ShObjectInfo& objectInfo )
@@ -173,7 +159,7 @@ void logic::sceneUnload( const char* name )
 {
   auto sceneId = StringId( name );
 
-  core::loopEnqueueDefferedTask( [sceneId]() {
+  core::system::task::runDeffered( [sceneId]() {
     auto it = std::ranges::find_if( sData->scenes, [=]( SceneInfo& scene ) {
       return scene.scene.getId() == sceneId;
     } );

@@ -2,6 +2,7 @@
 #include "core/common.hpp"
 #include "core/system/time.hpp"
 #include "core/system/message-queue.hpp"
+#include "core/system/task.hpp"
 
 namespace core::system
 {

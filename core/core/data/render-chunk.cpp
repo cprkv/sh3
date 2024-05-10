@@ -106,7 +106,7 @@ namespace
     auto chunk     = findRenderChunk( id );
     auto chunkPath = data::getDataPath( name );
 
-    core::loopEnqueueTask( [=]() {
+    core::system::task::runAsync( [=]() {
       auto chunkImport = data::schema::Chunk();
 
       // 1. read file and decode chunk in understandable format
@@ -115,7 +115,7 @@ namespace
         msgpack::object        obj;
         if( auto s = fs::readFileMsgpack( chunkPath.c_str(), obj, objHandle ); s != StatusOk )
         {
-          core::loopEnqueueDefferedTask( [=]() { chunk->loading = false; } );
+          core::system::task::runDeffered( [=]() { chunk->loading = false; } );
           return;
         }
 
@@ -127,7 +127,7 @@ namespace
         {
           std::string exceptionMessage = ex.what();
           core::setErrorDetails( "exception while decoding render chunk: %s", exceptionMessage.c_str() );
-          core::loopEnqueueDefferedTask( [=]() { chunk->loading = false; } );
+          core::system::task::runDeffered( [=]() { chunk->loading = false; } );
           return;
         }
       }
@@ -135,16 +135,16 @@ namespace
       // 2. spawn bunch of deffered tasks and run them in loop step up to *deadline* constant
       {
         for( auto&& texture: chunkImport.textures )
-          core::loopEnqueueDefferedTask( UploadTextureToGpuTask{
+          core::system::task::runDeffered( UploadTextureToGpuTask{
               .texture = std::move( texture ),
               .data    = chunk } );
 
         for( auto&& mesh: chunkImport.meshes )
-          core::loopEnqueueDefferedTask( UploadMeshToGpuTask{
+          core::system::task::runDeffered( UploadMeshToGpuTask{
               .mesh = std::move( mesh ),
               .data = chunk } );
 
-        core::loopEnqueueDefferedTask( [=]() { chunk->loading = false; } );
+        core::system::task::runDeffered( [=]() { chunk->loading = false; } );
       }
     } );
 

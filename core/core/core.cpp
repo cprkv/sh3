@@ -16,11 +16,8 @@ namespace
 
   struct StaticData
   {
-    SDL_Window*                window = nullptr;
-    system::MessageQueue<Task> defferedTasks;
-    BS::thread_pool            threadPool{ 1 };
-    system::DeltaTime          deltaTime;
-    std::list<PeriodicalTask>  periodicalTasks;
+    SDL_Window*       window = nullptr;
+    system::DeltaTime deltaTime;
   };
 
   StaticData* sData = nullptr;
@@ -95,6 +92,7 @@ Status core::initialize()
 {
   commonInit();
   sData = new StaticData();
+  mCoreCheckStatus( system::task::init() );
   mCoreCheckStatus( initSDL() );
   mCoreCheckStatus( initData() );
   mCoreCheckStatus( initRender() );
@@ -121,12 +119,10 @@ void core::destroy()
     SDL_QuitSubSystem( sSDLInitSubsystems );
   }
 
+  system::task::destroy();
+
   // static data shutdown
-  {
-    core::setErrorDetails( nullptr ); // free error details
-    sData->threadPool.purge();
-    delete sData;
-  }
+  delete sData;
 
   commonDestroy();
 }
@@ -135,7 +131,6 @@ void core::destroy()
 LoopStatus core::loopStepBegin()
 {
   sData->deltaTime.onLoopStart();
-  auto stopwatch = core::system::Stopwatch();
 
   data::update();
   input::preUpdate();
@@ -149,51 +144,7 @@ LoopStatus core::loopStepBegin()
     input::handle( event );
   }
 
-  // do deffered tasks
-  {
-    constexpr u32 deadlineMs     = 14; // 16 ms per frame for 60 fps
-    u32           tasksCompleted = 0;
-
-    for( ;; )
-    {
-      auto message = sData->defferedTasks.tryPop();
-      if( !message )
-      {
-        if( tasksCompleted > 0 )
-          mCoreLogDebug( "deffered tasks completed: " mFmtU32 "\n", tasksCompleted );
-        break;
-      }
-
-      ( *message )();
-      tasksCompleted++;
-
-      u64 timePassedMs = stopwatch.getMs();
-      if( timePassedMs >= deadlineMs )
-      {
-        auto diff = timePassedMs - deadlineMs;
-        if( diff > 0 )
-          mCoreLogDebug( "deffered tasks is " mFmtU64 "ms ahead of deadline\n", diff );
-        mCoreLogDebug( "deffered tasks completed: " mFmtU32 "\n", tasksCompleted );
-        break;
-      }
-    }
-  }
-
-  // do periodical tasks
-  {
-    auto it = sData->periodicalTasks.begin();
-
-    while( it != sData->periodicalTasks.end() )
-    {
-      auto cur = it;
-      ++it;
-
-      auto periodicalStatus = ( *cur )();
-      if( periodicalStatus == PeriodicalStatusStop )
-        sData->periodicalTasks.erase( cur );
-    }
-  }
-
+  system::task::update();
   logic::update();
 
   return LoopStatusContinue;
@@ -202,28 +153,8 @@ LoopStatus core::loopStepBegin()
 
 void core::loopStepEnd()
 {
-  // run all subsystems up to end of frame (and vsync)
-
   render::present();
   sData->deltaTime.onLoopEnd();
-}
-
-
-void core::loopEnqueueDefferedTask( Task task )
-{
-  sData->defferedTasks.push( std::move( task ) );
-}
-
-
-void core::loopEnqueuePeriodicalTask( PeriodicalTask task )
-{
-  sData->periodicalTasks.emplace_back( std::move( task ) );
-}
-
-
-void core::loopEnqueueTask( Task task )
-{
-  ( void ) sData->threadPool.detach_task( std::move( task ) );
 }
 
 

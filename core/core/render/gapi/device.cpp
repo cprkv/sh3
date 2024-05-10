@@ -2,10 +2,11 @@
 #include "core/utils.hpp"
 #include <dxgi1_6.h>
 
+using namespace core;
 using namespace core::render;
 using namespace core::render::gapi;
 
-Device* core::render::gapi::gDevice = nullptr;
+Device* gapi::gDevice = nullptr;
 
 
 namespace
@@ -41,7 +42,7 @@ namespace
       {
         const auto* wcstr = reinterpret_cast<const wchar_t*>( stringPtr );
         auto        wstr  = std::wstring_view( wcstr, stringLength );
-        auto        str   = convertWideStringToMultiByte( wstr );
+        auto        str   = utils::convertWideStringToMultiByte( wstr );
         if( !str )
           return EXCEPTION_CONTINUE_SEARCH;
         mCoreLogError( "[render] %s", str->c_str() );
@@ -73,7 +74,7 @@ namespace
       auto desc = DXGI_ADAPTER_DESC{};
       mCoreCheckHR( adapter->GetDesc( &desc ) );
       out.emplace_back( AdapterInfo{
-          .name    = convertWideStringToMultiByte( desc.Description ).value(),
+          .name    = utils::convertWideStringToMultiByte( desc.Description ).value(),
           .adapter = std::move( adapter ),
       } );
     }

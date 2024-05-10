@@ -1,7 +1,9 @@
 #include "core/utils.hpp"
 
+using namespace core;
+using namespace core::utils;
 
-std::optional<std::string> convertWideStringToMultiByte( std::wstring_view input )
+std::optional<std::string> utils::convertWideStringToMultiByte( std::wstring_view input )
 {
   int length = WideCharToMultiByte( CP_ACP, 0,
                                     input.data(), static_cast<int>( input.size() ),
