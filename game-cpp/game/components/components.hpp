@@ -1,6 +1,5 @@
 #pragma once
 #include "core/core.hpp"
-#include "game/data/serialization.hpp"
 
 namespace game
 {
@@ -16,7 +15,15 @@ namespace game
     void update( const core::system::DeltaTime& dt ) override;
   };
 
+
+  struct RemoveSceneComponent : core::Component
+  {
+    mCoreComponent( RemoveSceneComponent );
+
+    void update( const core::system::DeltaTime& ) override;
+  };
+
+
   void registerComponents();
-  void instantiateComponents( core::Entity& entity, const ShObjectInfo& objectInfo );
 
 } // namespace game

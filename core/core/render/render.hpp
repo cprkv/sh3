@@ -48,5 +48,7 @@ namespace core::render
 
   Status initialize( HWND windowHandle );
   void   destroy();
-  void   present();
+
+  RenderList& getRenderList();
+  void        present();
 } // namespace core::render

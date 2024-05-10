@@ -125,22 +125,7 @@ void input::handle( SDL_Event& e )
   setSdlKeyMod( static_cast<SDL_Keymod>( e.key.keysym.mod ) );
 }
 
-bool input::isKeyPressed( Key k )
-{
-  return sData->keyState[k];
-}
-
-bool input::isKeyDown( Key k )
-{
-  return sData->keyDown[k];
-}
-
-bool input::isKeyUp( Key k )
-{
-  return sData->keyUp[k];
-}
-
-bool input::isKeyMod( KeyMod m )
-{
-  return sData->keyModState[m];
-}
+bool input::isKeyPressed( Key k ) { return sData->keyState[k]; }
+bool input::isKeyDown( Key k ) { return sData->keyDown[k]; }
+bool input::isKeyUp( Key k ) { return sData->keyUp[k]; }
+bool input::isKeyMod( KeyMod m ) { return sData->keyModState[m]; }

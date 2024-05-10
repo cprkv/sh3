@@ -3,90 +3,6 @@
 
 using namespace game;
 
-namespace
-{
-  // temporary all components live here...
-
-  core::render::Mesh* findMesh( core::data::RenderChunksView renderChunks, StringId id )
-  {
-    for( auto& chunk: renderChunks )
-      if( auto* mesh = chunk.getMesh( id ) )
-        return mesh;
-
-    assert( false ); // mesh not found
-    return nullptr;
-  }
-
-  core::render::Texture* findTexture( core::data::RenderChunksView renderChunks, StringId id )
-  {
-    for( auto& chunk: renderChunks )
-      if( auto* mesh = chunk.getTexture( id ) )
-        return mesh;
-
-    assert( false ); // texture not found
-    return nullptr;
-  }
-
-
-  class TransformComponent : public core::Component
-  {
-  public:
-    mCoreComponent( TransformComponent );
-
-    Vec3 position;
-    Quat rotation;
-    Vec3 scale;
-
-    Mat4 getWorldTransform() const
-    {
-      return glm::translate( position ) *
-             glm::toMat4( rotation ) *
-             glm::scale( scale );
-    }
-
-    void deserialize( const Json::object_t& obj ) override
-    {
-      obj.at( "position" ).get_to( position );
-      obj.at( "rotation" ).get_to( rotation );
-      obj.at( "scale" ).get_to( scale );
-    }
-  };
-
-
-  class RenderMeshComponent : public core::Component
-  {
-  public:
-    mCoreComponent( RenderMeshComponent );
-
-    core::render::Mesh*    mesh;
-    core::render::Texture* textureDiffuse;
-    TransformComponent*    transform;
-
-    void deserialize( const Json::object_t& obj ) override
-    {
-      StringId meshId;
-      StringId textureDiffuseId;
-
-      obj.at( "mesh" ).get_to( meshId );
-      obj.at( "textureDiffuse" ).get_to( textureDiffuseId );
-
-      mesh           = findMesh( getEntity()->getScene()->getRenderChunks(), meshId );
-      textureDiffuse = findTexture( getEntity()->getScene()->getRenderChunks(), textureDiffuseId );
-    }
-
-    void init() override
-    {
-      transform = getComponent<TransformComponent>();
-      assert( transform );
-    }
-
-    void update( const core::system::DeltaTime& ) override
-    {
-      RenderManager::i->renderList.addMesh( mesh, textureDiffuse, transform->getWorldTransform() );
-    }
-  };
-} // namespace
-
 
 void FreeFlyCameraComponent::update( const core::system::DeltaTime& )
 {
@@ -143,37 +59,31 @@ void FreeFlyCameraComponent::update( const core::system::DeltaTime& )
   camera.position  = position_;
   camera.direction = rotation_.getForward();
 
-  auto& renderList                     = RenderManager::i->renderList;
+  auto& renderList                     = core::render::getRenderList();
   renderList.viewPosition              = camera.position;
   renderList.viewToProjectionTransform = camera.getViewToProjectionTransform();
   renderList.worldToViewTransform      = camera.getWorldToViewTransform();
 }
 
 
-void game::instantiateComponents( core::Entity& entity, const ShObjectInfo& objectInfo )
+void RemoveSceneComponent::update( const core::system::DeltaTime& )
 {
-  // TODO: this is developer's try-catch
-  try
+  using namespace core::input;
+
+  if( isKeyDown( Key1 ) )
   {
-    for( auto& component: objectInfo.components )
-    {
-      auto* componentInstance = core::logic::instantiateComponent( component.type, &entity );
-      componentInstance->deserialize( component.data );
-      entity.addComponent( component.type, componentInstance );
-    }
+    core::logic::sceneLoad( "X0/MR1F-MFA/mr1f-pp" );
   }
-  catch( std::exception& ex )
+
+  if( isKeyDown( Key0 ) )
   {
-    mCoreLogError( "instantiate components on entity " mFmtStringHash " failed: %s\n",
-                   entity.getId().getHash(), ex.what() );
-    assert( false );
+    core::logic::sceneUnload( "X0/MR1F-MFA/mr1f-pp" );
   }
 }
 
 
 void game::registerComponents()
 {
-  core::logic::registerComponent<TransformComponent>();
-  core::logic::registerComponent<RenderMeshComponent>();
-  core::logic::registerComponent<FreeFlyCameraComponent>();
+  core::logic::componentRegister<FreeFlyCameraComponent>();
+  core::logic::componentRegister<RemoveSceneComponent>();
 }

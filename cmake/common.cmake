@@ -41,11 +41,13 @@ endmacro()
 
 
 function(vy_configure_compiler target)
+  set(ipo_enable "$<AND:$<NOT:$<CONFIG:Debug>>:$<BOOL:${IPO_SUPPORTED}>>")
+  
   set_target_properties(${target} PROPERTIES
     CXX_STANDARD 23
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS ON
-    INTERPROCEDURAL_OPTIMIZATION $<IF:$<AND:$<NOT:$<CONFIG:Debug>>:$<BOOL:${IPO_SUPPORTED}>>,ON,OFF>
+    INTERPROCEDURAL_OPTIMIZATION $<IF:${ipo_enable},ON,OFF>
     # MSVC_DEBUG_INFORMATION_FORMAT EditAndContinue
   )
   # $<$<OR:$<CONFIG:RelWithDebInfo>,$<CONFIG:Debug>>:/analyze>

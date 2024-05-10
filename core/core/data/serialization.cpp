@@ -1,24 +1,25 @@
-#include "game/data/serialization.hpp"
+#include "core/data/serialization.hpp"
+#include "core/fs/fs.hpp"
 #include <nlohmann/json.hpp>
 
-using namespace game;
+using namespace core;
 
-namespace game
+namespace core::data
 {
   NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE( ShComponent, type, data );
   NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE( ShObjectInfo, name, components );
-  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE( SceneInfo, objects, render_chunks );
+  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE( ShSceneInfo, objects, render_chunks );
 } // namespace game
 
 
-Status game::parseJsonFile( std::string path, SceneInfo& output )
+Status data::parseJsonFile( std::string path, ShSceneInfo& output )
 {
   auto json = Json();
   mCoreCheckStatus( core::fs::readFileJson( path, json ) );
 
   try
   {
-    output = json.get<SceneInfo>();
+    output = json.get<ShSceneInfo>();
   }
   catch( const nlohmann::json::exception& ex )
   {

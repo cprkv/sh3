@@ -38,36 +38,18 @@ namespace
     void   update() override {}
     void   shutdown() override {}
   };
-
-
-  struct RenderManagerImpl : public RenderManager
-  {
-    Status init() override { return StatusOk; }
-
-    void update() override
-    {
-      renderList.submit();
-      renderList.clear();
-    }
-
-    void shutdown() override {}
-  };
 } // namespace
 
 
-static auto*         gMakeCommandManager() { return new CommandManagerImpl(); }
-static auto*         gMakeDebugConsole() { return new DebugConsoleImpl(); }
-static auto*         gMakeUiManager() { return new UiManagerImpl(); }
-static auto*         gMakeRenderManager() { return new RenderManagerImpl(); }
-extern SceneManager* gMakeSceneManager();
+static auto* gMakeCommandManager() { return new CommandManagerImpl(); }
+static auto* gMakeDebugConsole() { return new DebugConsoleImpl(); }
+static auto* gMakeUiManager() { return new UiManagerImpl(); }
 
 
 #define xSubSystems( X ) \
   X( CommandManager )    \
   X( DebugConsole )      \
-  X( SceneManager )      \
-  X( UiManager )         \
-  X( RenderManager )
+  X( UiManager )
 
 
 #define mInitSubsystem( Name )                              \

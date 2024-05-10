@@ -1,7 +1,7 @@
 #pragma once
-#include "core/core.hpp"
+#include "core/common.hpp"
 
-namespace game
+namespace core::data
 {
   struct ShComponent
   {
@@ -15,11 +15,11 @@ namespace game
     std::vector<ShComponent> components;
   };
 
-  struct SceneInfo
+  struct ShSceneInfo
   {
     std::vector<ShObjectInfo> objects;
     std::vector<std::string>  render_chunks;
   };
 
-  Status parseJsonFile( std::string path, SceneInfo& output );
+  Status parseJsonFile( std::string path, ShSceneInfo& output );
 } // namespace game

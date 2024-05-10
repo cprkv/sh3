@@ -1,9 +1,5 @@
 #include "core/core.hpp"
 #include "core/utils.hpp"
-#include "core/render/render.hpp"
-#include "core/data/data.hpp"
-#include "core/system/time.hpp"
-#include "core/system/message-queue.hpp"
 #include <SDL_syswm.h>
 
 using namespace core;
@@ -197,6 +193,8 @@ LoopStatus core::loopStepBegin()
         sData->periodicalTasks.erase( cur );
     }
   }
+
+  logic::update();
 
   return LoopStatusContinue;
 }

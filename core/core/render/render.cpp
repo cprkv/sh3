@@ -16,6 +16,7 @@ namespace
   struct StaticData
   {
     RenderPass3D renderPass3d;
+    RenderList   renderList;
   };
 
   StaticData* sData = nullptr;
@@ -105,8 +106,16 @@ void render::destroy()
 }
 
 
+RenderList& render::getRenderList()
+{
+  return sData->renderList;
+}
+
+
 void render::present()
 {
+  sData->renderList.submit();
+  sData->renderList.clear();
   gDevice->viewport.present();
   gDevice->logMessages();
 }
