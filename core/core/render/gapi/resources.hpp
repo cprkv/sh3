@@ -134,7 +134,7 @@ namespace core::render::gapi
 
     Status init( u32 width, u32 height, DXGI_FORMAT format );
     Status init( u32 width, u32 height, Vec4b* data );
-    Status init( data::schema::Texture& textureSchema );
+    Status init( const data::schema::Texture& textureSchema );
     void   use( u32 slot );
   };
 

@@ -73,8 +73,10 @@ function(vy_configure_compiler target)
     -Wno-unsafe-buffer-usage # we dont do rust here
 
     # not errors, but still warnings
-    -Wno-error=switch-enum
-    -Wno-error=shadow-uncaptured-local
+    #-Wno-error=switch-enum
+    #-Wno-error=shadow-uncaptured-local
+    -Wno-switch-enum
+    -Wno-shadow-uncaptured-local
   )
 
   target_compile_options(${PROJECT_NAME} PUBLIC

@@ -19,6 +19,8 @@ namespace core::data
     bool isLoaded() const;
     void load( const char* name );
 
+    static cti::continuable<RenderChunk> loadCti( const std::string& name );
+
     core::render::Material* getMaterial( StringId id );
     core::render::Mesh*     getMesh( StringId id );
     core::render::Texture*  getTexture( StringId id );

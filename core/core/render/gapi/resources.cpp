@@ -399,7 +399,7 @@ Status Texture::init( u32 width, u32 height, Vec4b* data )
   return StatusOk;
 }
 
-Status Texture::init( data::schema::Texture& textureSchema )
+Status Texture::init( const data::schema::Texture& textureSchema )
 {
   auto textureDesc = D3D11_TEXTURE2D_DESC{
       .Width          = textureSchema.width,

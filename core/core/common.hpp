@@ -2,6 +2,8 @@
 
 #define GLM_ENABLE_EXPERIMENTAL
 #define SDL_MAIN_HANDLED
+#define CONTINUABLE_WITH_NO_EXCEPTIONS
+#define CONTINUABLE_WITH_CUSTOM_ERROR_TYPE Status
 
 #pragma warning( push )
 #pragma warning( disable : 4702 )
@@ -138,6 +140,9 @@ enum Status
   StatusNotFound,
 };
 
+// requires Status to be defined before
+#include <continuable/continuable.hpp>
+
 namespace core
 {
   void        commonInit();
@@ -146,6 +151,11 @@ namespace core
   const char* getErrorDetails();
   void        setErrorDetails( const char* message, ... );
 } // namespace core
+
+
+struct None
+{
+};
 
 
 class ArrayBytesView

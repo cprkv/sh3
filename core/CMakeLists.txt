@@ -23,5 +23,6 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
   SDL2::SDL2-static
   nlohmann-json
   msgpack-cxx
+  continuable::continuable
 )
 vy_link_dx_libraries(${PROJECT_NAME} PUBLIC d3d11 dxgi dxguid d3dcompiler)

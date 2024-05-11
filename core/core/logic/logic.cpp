@@ -22,63 +22,6 @@ namespace
 
   StaticData* sData = nullptr;
 
-  //---------------------------------------------------------------
-  // TODO: this is serialization heavy-dependent stuff, should be in data?
-  //---------------------------------------------------------------
-
-  using LoadSceneAction = std::function<void( data::ShSceneInfo, data::RenderChunks )>;
-
-  void loadSceneTask( const std::string& name, LoadSceneAction action )
-  {
-    using enum system::task::PeriodicalStatus;
-
-    auto sceneJsonPath = data::getDataPath( ( name + ".scene.json" ).c_str() );
-
-    auto sceneJsonResult = system::task::runAsync1(
-        [sceneJsonPath]() mutable -> std::expected<data::ShSceneInfo, Status> {
-          return utils::turnIntoExpected( data::parseJsonFile, sceneJsonPath );
-        } );
-
-    auto task = [renderChunks    = data::RenderChunks(),
-                 action          = std::move( action ),
-                 sceneJsonResult = std::move( sceneJsonResult )]() mutable {
-      // wait json is loaded
-      if( !sceneJsonResult.isReady() )
-        return PeriodicalStatusContinue;
-
-      if( !sceneJsonResult->has_value() )
-      {
-        mCoreLogError( "error loading scene json: %d %s\n",
-                       static_cast<int>( sceneJsonResult->error() ),
-                       getErrorDetails() );
-        return PeriodicalStatusStop;
-      }
-
-      // queue load render chunks
-      if( renderChunks.size() != sceneJsonResult->value().render_chunks.size() )
-      {
-        renderChunks.resize( sceneJsonResult->value().render_chunks.size() );
-        for( size_t i = 0; i < renderChunks.size(); ++i )
-          renderChunks[i].load( sceneJsonResult->value().render_chunks[i].c_str() );
-      }
-
-      // wait until render chunks ready
-      if( renderChunks.size() )
-      {
-        auto allLoaded = std::ranges::all_of( renderChunks, []( const auto& chunk ) { return chunk.isLoaded(); } );
-        if( !allLoaded )
-          return PeriodicalStatusContinue;
-      }
-
-      action( std::move( sceneJsonResult->value() ),
-              std::move( renderChunks ) );
-
-      mCoreLog( "loading scene task done!\n" );
-      return PeriodicalStatusStop;
-    };
-
-    system::task::runPeriodical( std::move( task ) );
-  }
 
   void instantiateComponents( Entity& entity, const data::ShObjectInfo& objectInfo )
   {
@@ -100,6 +43,37 @@ namespace
     }
   }
 
+  void loadSceneAsync( const std::string& name, SceneInfo* scene )
+  {
+    auto sceneJsonPath = data::getDataPath( ( name + ".scene.json" ).c_str() );
+
+    system::task::ctiAsync( [sceneJsonPath]() -> std::expected<data::ShSceneInfo, Status> {
+      return utils::turnIntoExpected( data::parseJsonFile, sceneJsonPath );
+    } )
+        .then( []( data::ShSceneInfo sceneInfo ) {
+          auto renderChunks = sceneInfo.render_chunks |
+                              std::views::transform( data::RenderChunk::loadCti ) |
+                              std::ranges::to<std::vector>();
+          return cti::when_all( std::move( sceneInfo ), std::move( renderChunks ) );
+        } )
+        .then( [scene]( data::ShSceneInfo              sceneInfo,
+                        std::vector<data::RenderChunk> renderChunks ) {
+          scene->scene.setRenderChunks( std::move( renderChunks ) );
+
+          for( const auto& object: sceneInfo.objects )
+          {
+            auto* entity = scene->scene.addEntity( StringId( object.name ) );
+            instantiateComponents( *entity, object );
+          }
+
+          scene->scene.init();
+          scene->isLoading = false;
+        } )
+        .fail( [scene]( Status s ) {
+          mCoreLogError( "scene load failed: %d\n", static_cast<int>( s ) );
+          scene->isLoading = false;
+        } );
+  }
 } // namespace
 
 
@@ -140,19 +114,7 @@ void logic::sceneLoad( const char* name )
   auto* scene      = &sData->scenes.emplace_back( sceneId );
   scene->isLoading = true;
 
-  loadSceneTask( name, [scene]( data::ShSceneInfo  sceneInfo,
-                                data::RenderChunks renderChunks ) {
-    scene->scene.setRenderChunks( std::move( renderChunks ) );
-
-    for( const auto& object: sceneInfo.objects )
-    {
-      auto* entity = scene->scene.addEntity( StringId( object.name ) );
-      instantiateComponents( *entity, object );
-    }
-
-    scene->scene.init();
-    scene->isLoading = false;
-  } );
+  loadSceneAsync( name, scene );
 }
 
 void logic::sceneUnload( const char* name )
