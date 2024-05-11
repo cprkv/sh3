@@ -36,7 +36,7 @@ namespace
       if( exceptionRecord->ExceptionCode == DBG_PRINTEXCEPTION_C )
       {
         const auto* cstr = reinterpret_cast<const char*>( stringPtr );
-        mCoreLogError( "[render] %s", cstr );
+        mCoreLogError( "[render] %s\n", cstr );
       }
       else
       {
@@ -45,7 +45,7 @@ namespace
         auto        str   = utils::convertWideStringToMultiByte( wstr );
         if( !str )
           return EXCEPTION_CONTINUE_SEARCH;
-        mCoreLogError( "[render] %s", str->c_str() );
+        mCoreLogError( "[render] %s\n", str->c_str() );
       }
 
       return EXCEPTION_CONTINUE_EXECUTION;
@@ -71,7 +71,7 @@ namespace
          factory->EnumAdapters1( adapterIndex, adapter.ReleaseAndGetAddressOf() ) != DXGI_ERROR_NOT_FOUND;
          adapterIndex++ )
     {
-      auto desc = DXGI_ADAPTER_DESC{};
+      auto desc = DXGI_ADAPTER_DESC();
       mCoreCheckHR( adapter->GetDesc( &desc ) );
       out.emplace_back( AdapterInfo{
           .name    = utils::convertWideStringToMultiByte( desc.Description ).value(),
@@ -154,9 +154,9 @@ Status Device::init( HWND window )
 #ifdef mCoreGAPIDeviceDebug
     // TODO is this correct replacement for creating copy?
     // TODO is this really required???
-    auto tmpDevice  = ComPtr<ID3D11Device>{ device };
-    auto dx11Debug  = ComPtr<ID3D11Debug>{};
-    auto debugQueue = ComPtr<ID3D11InfoQueue>{};
+    auto tmpDevice  = ComPtr<ID3D11Device>( device );
+    auto dx11Debug  = ComPtr<ID3D11Debug>();
+    auto debugQueue = ComPtr<ID3D11InfoQueue>();
 
     mCoreCheckHR( tmpDevice.As( &dx11Debug ) );
     mCoreCheckHR( dx11Debug.As( &debugQueue ) );
@@ -242,10 +242,10 @@ Status Device::logMessages()
     auto messagePtr = reinterpret_cast<D3D11_MESSAGE*>( message.get() );
     mCoreCheckHR( infoQueue->GetMessage( i, messagePtr, &messageSize ) ); // get the actual message
 
-    if( messagePtr->Severity == D3D11_MESSAGE_SEVERITY_INFO )
-    {
-      continue; // TODO: too many info logs about state from sciter
-    }
+    //if( messagePtr->Severity == D3D11_MESSAGE_SEVERITY_INFO )
+    //{
+    //  continue; // TODO: too many info logs about state from sciter
+    //}
 
     const char* category = "<unknown>";
     const char* severity = "<unknown>";
@@ -306,7 +306,7 @@ Status Device::logMessages()
         break;
     }
 
-    mCoreLog( "[render][%s][%s] %.*s", severity, category,
+    mCoreLog( "[render][%s][%s] %.*s\n", severity, category,
               static_cast<int>( messagePtr->DescriptionByteLength ),
               messagePtr->pDescription );
   }

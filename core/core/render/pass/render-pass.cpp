@@ -70,7 +70,7 @@ void RenderPass3D::render( RenderList& renderList )
     vsConstant->gSceneLights.ambient             = Vec3( 0.1f );
     vsConstant->gSceneLights.count               = 1;
     vsConstant->gSceneLights.lights[0].position  = Vec3( 0 );
-    vsConstant->gSceneLights.lights[0].color     = core::math::decodeColorHex( 0xE78CFF );
+    vsConstant->gSceneLights.lights[0].color     = core::math::decodeColorHex( 0xE7'8C'FF );
     vsConstant->gSceneLights.lights[0].intensity = 40;
     vsConstant->gViewPos                         = renderList.viewPosition;
     vsConstant->gWorldToView                     = renderList.worldToViewTransform;
