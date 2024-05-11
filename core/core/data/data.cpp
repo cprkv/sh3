@@ -13,7 +13,8 @@ namespace
 {
   struct StaticData
   {
-    stdfs::path dataDirectory;
+    stdfs::path              dataDirectory;
+    StringIdMap<std::string> idsToFiles;
   };
 
   StaticData* sData = nullptr;
@@ -46,6 +47,67 @@ namespace
 
     return StatusOk;
   }
+
+
+  // is this FS related?
+  Status makeIdsToFiles()
+  {
+    auto ec = std::error_code();
+    auto it = stdfs::recursive_directory_iterator( sData->dataDirectory, ec );
+    if( ec )
+    {
+      core::setErrorDetails( "makeIdsToFiles: recursive directory iterator: %s", ec.message().c_str() );
+      return StatusSystemError;
+    }
+
+    do {
+      if( it->path().filename().string().starts_with( "." ) )
+      {
+        it.disable_recursion_pending();
+      }
+      else
+      {
+        bool isRegularFile = it->is_regular_file( ec );
+        if( ec )
+        {
+          core::setErrorDetails( "makeIdsToFiles: is regular file: %s", ec.message().c_str() );
+          return StatusSystemError;
+        }
+
+        if( isRegularFile )
+        {
+          auto relative = stdfs::relative( it->path(), sData->dataDirectory, ec );
+          if( ec )
+          {
+            core::setErrorDetails( "makeIdsToFiles: relative: %s", ec.message().c_str() );
+            return StatusSystemError;
+          }
+
+          auto path = relative.string();
+          std::ranges::replace( path, '\\', '/' );
+          auto id = StringId( path );
+          mCoreLog( "makeIdsToFiles: " mFmtStringHash " -> %s\n", id.getHash(), path.c_str() );
+
+          if( sData->idsToFiles.contains( id ) )
+          {
+            core::setErrorDetails( "makeIdsToFiles: already contains same id: %s (" mFmtStringHash ")", path.c_str(), id.getHash() );
+            return StatusSystemError;
+          }
+
+          sData->idsToFiles.emplace_unique( id, std::move( path ) );
+        }
+      }
+
+      it.increment( ec );
+      if( ec )
+      {
+        core::setErrorDetails( "makeIdsToFiles: increment directory iterator: %s", ec.message().c_str() );
+        return StatusSystemError;
+      }
+    } while( it != stdfs::recursive_directory_iterator() );
+
+    return StatusOk;
+  }
 } // namespace
 
 
@@ -53,6 +115,7 @@ Status data::initialize()
 {
   sData = new StaticData();
   mCoreCheckStatus( parseProjectConfig() );
+  mCoreCheckStatus( makeIdsToFiles() );
   mCoreCheckStatus( initializeRenderChunk() );
   return StatusOk;
 }
@@ -66,6 +129,13 @@ void data::destroy()
 void data::update()
 {
   updateRenderChunk();
+}
+
+std::string data::getDataPath( StringId id )
+{
+  assert( sData->idsToFiles.contains( id ) );
+  auto relativePath = sData->idsToFiles.get_or_return_default( id );
+  return ( sData->dataDirectory / relativePath ).string();
 }
 
 std::string data::getDataPath( const stdfs::path& resourceName )

@@ -4,6 +4,7 @@
 
 namespace core::data
 {
+  std::string        getDataPath( StringId id );
   std::string        getDataPath( const stdfs::path& resourceName );
   inline std::string getDataPath( const char* resourceName ) { return getDataPath( stdfs::path( resourceName ) ); }
 
