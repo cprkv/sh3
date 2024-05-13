@@ -5,6 +5,7 @@
 /out
 /build
 /deps
+/demos
 
 /game/.vs
 /game/*/bin

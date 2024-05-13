@@ -97,7 +97,7 @@ namespace core
 #endif
 
   public:
-    Scene( StringId id );
+    explicit Scene( StringId id );
 
     StringId getId() const { return id_; }
 

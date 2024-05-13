@@ -34,8 +34,8 @@ namespace
 
     int windowPosX  = SDL_WINDOWPOS_CENTERED;
     int windowPosY  = SDL_WINDOWPOS_CENTERED;
-    int windowSizeX = 1024;
-    int windowSizeY = 768;
+    int windowSizeX = 1920;
+    int windowSizeY = 1080;
 
     sData->window = SDL_CreateWindow( sWindowName,
                                       windowPosX, windowPosY,

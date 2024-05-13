@@ -13,21 +13,8 @@ int main( int, char** )
     core::system::fatalError( "Game initialization failed: %d %s", static_cast<int>( s ), core::getErrorDetails() );
 
   game::registerComponents();
-  core::logic::sceneLoad( "maps/debug/cs-arrows" );
-  core::logic::sceneLoad( "X0/MR1F-MFA/mr1f-pp" );
-
-  // add new scene with camera
-  {
-    auto* scene = core::logic::sceneNew( "demo" );
-
-    auto* cameraEntity = scene->addEntity( "camera"_sid );
-    cameraEntity->addComponent<game::FreeFlyCameraComponent>();
-
-    auto* removeSceneComponent = scene->addEntity( "removeScene"_sid );
-    removeSceneComponent->addComponent<game::RemoveSceneComponent>();
-
-    scene->init();
-  }
+  //core::logic::sceneLoad( "X0/MR1F-MFA/mr1f-pp" );
+  core::logic::sceneLoad( "maps/mall-real/mall-real-split" );
 
   for( ;; )
   {

@@ -54,7 +54,8 @@ function(vy_configure_compiler target)
   # -fanalyzer
 
   set(is_msvc "$<CXX_COMPILER_ID:MSVC>")
-  set(is_debug "$<OR:$<CONFIG:RelWithDebInfo>,$<CONFIG:Debug>>")
+  #set(is_debug "$<OR:$<CONFIG:RelWithDebInfo>,$<CONFIG:Debug>>")
+  set(is_debug "$<CONFIG:Debug>")
   set(is_release "$<NOT:${is_debug}>")
   set(debug_msvc "$<AND:${is_msvc},${is_debug}>")
   set(release_msvc "$<AND:${is_msvc},${is_release}>")

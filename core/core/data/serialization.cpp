@@ -7,7 +7,7 @@ using namespace core;
 namespace core::data
 {
   NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE( ShComponent, type, data );
-  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE( ShObjectInfo, name, components );
+  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE( ShObjectInfo, id, components );
   NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE( ShSceneInfo, objects, render_chunks );
 } // namespace game
 

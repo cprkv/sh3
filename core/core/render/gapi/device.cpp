@@ -11,9 +11,10 @@ Device* gapi::gDevice = nullptr;
 
 namespace
 {
+#ifdef _DEBUG
+
   // TODO: this happens because of sciter shit but is it worth it?? also need to use it when sciter comes
   bool sNativeLogState = true;
-
 
   void enablePrintingDebugMessages()
   {
@@ -53,6 +54,7 @@ namespace
 
     AddVectoredExceptionHandler( TRUE, exceptionHandler );
   }
+#endif
 
 
   struct AdapterInfo

@@ -216,18 +216,32 @@ def path_without_extension(path):
 def get_object_components(obj, mesh_info: ShMeshInfo) -> List[ShComponent]:
   obj.rotation_mode = 'QUATERNION'
 
-  transform: ShComponent = {'type': SH_COMPONENT_TRANSFORM,
+  transform: ShComponent = {'type': TRANSFORM_COMPONENT_TYPE,
                             'data': {'position': vec_to_map(obj.location),
                                      'rotation': quat_to_map(obj.rotation_quaternion),
                                      'scale': vec_to_map(obj.scale)}}
 
   diffuse_path = path_without_extension(mesh_info['material_info']['diffuse']['path']['path'])
-  render_mesh: ShComponent = {'type': SH_COMPONENT_RENDER_MESH,
+  render_mesh: ShComponent = {'type': RENDER_MESH_COMPONENT_TYPE,
                               'data': {'mesh': string_hash(mesh_info['name']),
                                        'textureDiffuse': string_hash(diffuse_path)}}
 
   components: List[ShComponent] = [transform, render_mesh]
   return components
+
+
+def do_post_process(scene_postprocess_full_path: Path, scene_info: SceneInfo):
+  if not scene_postprocess_full_path.exists():
+    print("postprocess will not apply as script file is absent")
+    return scene_info
+  print("postprocess started")
+  content = ""
+  with scene_postprocess_full_path.open() as f:
+    content = f.read()
+  exec(content, globals())
+  scene_info = postprocess(scene_info)
+  print("postprocess ended")
+  return scene_info
 
 
 def process_scene():
@@ -255,6 +269,8 @@ def process_scene():
     print(f"material: {material_info}")
 
     vertex_data = get_mesh_vertex_datas(obj.data, obj.matrix_world)
+    if len(vertex_data) == 0:
+      raise Exception(f'mesh {obj.name} has no vertices')
     mesh_info: ShMeshInfo = {'name': obj.name,
                              'material_info': material_info,
                              'vertex_data': vertex_data}
@@ -262,7 +278,7 @@ def process_scene():
 
     # todo: this not only for meshes, but also for all other things like lighting, etc.
     components = get_object_components(obj, mesh_info)
-    object_info: ShObjectInfo = {'name': obj.name,
+    object_info: ShObjectInfo = {'id': string_hash(obj.name),
                                  'components': components}
     scene_info['objects'].append(object_info)
 
@@ -276,6 +292,15 @@ def process_scene():
         Path(mesh_file.name).unlink()
       else:
         print(f'data not deleted: {mesh_file.name}')
+
+  scene_output_path = Path(scene_path_info['path']).with_suffix('.scene.json')
+  scene_output_full_path = Path(GAME_DATA_PATH, scene_output_path)
+
+  scene_postprocess_path = Path(scene_path_info['path']).with_suffix('.py')
+  scene_postprocess_full_path = Path(GAME_DATA_PATH, scene_postprocess_path)
+
+  # postprocess scene if it has custom script
+  scene_info = do_post_process(scene_postprocess_full_path, scene_info)
 
   scene_output_path = Path(scene_path_info['path']).with_suffix('.scene.json')
   scene_output_full_path = Path(GAME_DATA_PATH, scene_output_path)

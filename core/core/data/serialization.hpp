@@ -11,7 +11,7 @@ namespace core::data
 
   struct ShObjectInfo
   {
-    std::string              name;
+    StringHash               id;
     std::vector<ShComponent> components;
   };
 
@@ -22,4 +22,4 @@ namespace core::data
   };
 
   Status parseJsonFile( std::string path, ShSceneInfo& output );
-} // namespace game
+} // namespace core::data

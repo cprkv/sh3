@@ -10,8 +10,9 @@ namespace
 {
   struct SceneInfo
   {
-    Scene scene;
-    bool  isLoading = false;
+    Scene             scene;
+    bool              isLoading = false;
+    system::Stopwatch loadingTime;
   };
 
   struct StaticData
@@ -45,6 +46,7 @@ namespace
 
   void loadSceneAsync( const std::string& name, SceneInfo* scene )
   {
+    scene->isLoading   = true;
     auto sceneJsonPath = data::getDataPath( ( name + ".scene.json" ).c_str() );
 
     system::task::ctiAsync( [sceneJsonPath]() -> std::expected<data::ShSceneInfo, Status> {
@@ -62,12 +64,14 @@ namespace
 
           for( const auto& object: sceneInfo.objects )
           {
-            auto* entity = scene->scene.addEntity( StringId( object.name ) );
+            auto* entity = scene->scene.addEntity( object.id );
             instantiateComponents( *entity, object );
           }
 
           scene->scene.init();
           scene->isLoading = false;
+          mCoreLog( "scene " mFmtStringHash " loaded and initialized. it took " mFmtU64 "ms\n",
+                    scene->scene.getId().getHash(), scene->loadingTime.getMs() );
         } )
         .fail( [scene]( Status s ) {
           mCoreLogError( "scene load failed: %d\n", static_cast<int>( s ) );
@@ -111,8 +115,7 @@ void logic::sceneLoad( const char* name )
   }
 
   mCoreLog( "loading scene " mFmtStringHash "...\n", sceneId.getHash() );
-  auto* scene      = &sData->scenes.emplace_back( sceneId );
-  scene->isLoading = true;
+  auto* scene = &sData->scenes.emplace_back( Scene( sceneId ) );
 
   loadSceneAsync( name, scene );
 }

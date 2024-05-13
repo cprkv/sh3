@@ -68,8 +68,10 @@ class Vec4fDict(TypedDict):
   w: float
 
 
-SH_COMPONENT_TRANSFORM: int = string_hash("TransformComponent")
-SH_COMPONENT_RENDER_MESH: int = string_hash("RenderMeshComponent")
+TRANSFORM_COMPONENT_TYPE: int = string_hash("TransformComponent")
+RENDER_MESH_COMPONENT_TYPE: int = string_hash("RenderMeshComponent")
+FREE_FLY_CAMERA_COMPONENT_TYPE: int = string_hash("FreeFlyCameraComponent")
+REMOVE_SCENE_COMPONENT_TYPE: int = string_hash("RemoveSceneComponent")
 
 
 class ShComponent(TypedDict):
@@ -77,7 +79,7 @@ class ShComponent(TypedDict):
 
 
 class ShObjectInfo(TypedDict):
-  name: str
+  id: int
   components: List[ShComponent]
 
 
