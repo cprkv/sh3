@@ -46,7 +46,7 @@ namespace intermediate
 
   struct SceneInfo
   {
-    PathInfo              path;
+    std::string           path;
     std::vector<MeshInfo> meshes;
 
     MSGPACK_DEFINE_MAP( path, meshes );

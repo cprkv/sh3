@@ -18,7 +18,7 @@ namespace core::data
   struct ShSceneInfo
   {
     std::vector<ShObjectInfo> objects;
-    std::vector<std::string>  render_chunks;
+    std::vector<StringHash>   render_chunks;
   };
 
   Status parseJsonFile( std::string path, ShSceneInfo& output );

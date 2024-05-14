@@ -24,5 +24,6 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
   nlohmann-json
   msgpack-cxx
   continuable::continuable
+  Dwmapi
 )
 vy_link_dx_libraries(${PROJECT_NAME} PUBLIC d3d11 dxgi dxguid d3dcompiler)

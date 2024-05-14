@@ -14,44 +14,43 @@ def string_hash(s: str) -> int:
 
 
 #######################################################
-# core data
+# mesh tool data
 #######################################################
 
+MT_DIFFUSE_USAGE_OPAQUE = "Opaque"
+MT_DIFFUSE_USAGE_TRANSPARENT = "Transparent"
+MT_DIFFUSE_USAGE_PERFORATING = "Perforating"
 
-class ShPathInfo(TypedDict):
+
+class MtPathInfo(TypedDict):
   base: str
   full: str
   path: str
 
 
-class ShTextureInfo(TypedDict):
-  path: ShPathInfo
+class MtTextureInfo(TypedDict):
+  path: MtPathInfo
   size: List
 
 
-SH_DIFFUSE_USAGE_OPAQUE = "Opaque"
-SH_DIFFUSE_USAGE_TRANSPARENT = "Transparent"
-SH_DIFFUSE_USAGE_PERFORATING = "Perforating"
-
-
-class ShMaterialInfo(TypedDict):
+class MtMaterialInfo(TypedDict):
   name: str
-  diffuse: ShTextureInfo
+  diffuse: MtTextureInfo
   diffuse_usage: str
 
 
-class ShMeshInfo(TypedDict):
+class MtMeshInfo(TypedDict):
   name: str
   vertex_data: List
-  material_info: ShMaterialInfo
+  material_info: MtMaterialInfo
 
 
-class RenderChunk(TypedDict):
-  path: ShPathInfo
-  meshes: List[ShMeshInfo]
+class MtSceneInfo(TypedDict):
+  path: MtPathInfo
+  meshes: List[MtMeshInfo]
 
 #######################################################
-# game data
+# scene data
 #######################################################
 
 

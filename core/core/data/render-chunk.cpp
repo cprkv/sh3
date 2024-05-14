@@ -44,21 +44,14 @@ namespace
   StaticData* sData = nullptr;
 
 
-  RenderChunkData* findRenderChunk( StringId id )
+  cti::continuable<data::schema::Chunk> readChunkAsync( StringId id )
   {
-    auto chunkIt = std::find_if( sData->renderChunks.begin(), sData->renderChunks.end(),
-                                 [=]( RenderChunkData& data ) { return data.id == id; } );
-    return chunkIt != sData->renderChunks.end() ? &*chunkIt : nullptr;
-  }
-
-
-  cti::continuable<data::schema::Chunk> readChunkAsync( std::string chunkPath )
-  {
-    return system::task::ctiAsync( [chunkPath = std::move( chunkPath )]() -> std::expected<data::schema::Chunk, Status> {
+    return system::task::ctiAsync( [id]() -> std::expected<data::schema::Chunk, Status> {
+      auto path      = data::getDataPath( id );
       auto objHandle = msgpack::object_handle();
       auto obj       = msgpack::object();
 
-      if( auto s = fs::readFileMsgpack( chunkPath.c_str(), obj, objHandle ); s != StatusOk )
+      if( auto s = fs::readFileMsgpack( path.c_str(), obj, objHandle ); s != StatusOk )
         return std::unexpected( s );
 
       try
@@ -119,13 +112,20 @@ namespace
     } );
   }
 
-  RenderChunkData& addRenderChunk( StringId id, const char* name )
+
+  RenderChunkData* findRenderChunk( StringId id )
+  {
+    auto chunkIt = std::find_if( sData->renderChunks.begin(), sData->renderChunks.end(),
+                                 [=]( RenderChunkData& data ) { return data.id == id; } );
+    return chunkIt != sData->renderChunks.end() ? &*chunkIt : nullptr;
+  }
+
+  RenderChunkData& addRenderChunk( StringId id )
   {
     sData->renderChunks.add( { .id = id, .loading = true } );
-    auto chunk     = findRenderChunk( id );
-    auto chunkPath = data::getDataPath( name );
+    auto chunk = findRenderChunk( id );
 
-    readChunkAsync( chunkPath )
+    readChunkAsync( id )
         .then( [chunk]( data::schema::Chunk chunkImport ) {
           auto subtasks = std::vector<cti::continuable<None>>();
 
@@ -137,35 +137,36 @@ namespace
 
           return cti::when_all( std::move( subtasks ) );
         } )
-        .then( [chunk, chunkPath]( std::vector<None> ) { // TODO: execution context?
+        .then( [chunk]( std::vector<None> ) { // TODO: execution context?
           chunk->loading = false;
 
           for( auto&& func: chunk->loadCallbacks )
             func( StatusOk );
           chunk->loadCallbacks.clear();
 
-          mCoreLog( "chunk '%s' is fully loaded and ready!\n", chunkPath.c_str() );
+          mCoreLog( "chunk " mFmtStringHash " is fully loaded and ready!\n", chunk->id.getHash() );
         } )
-        .fail( [chunk, chunkPath]( Status s ) {
+        .fail( [chunk]( Status s ) {
           chunk->loading = false;
 
           for( auto&& func: chunk->loadCallbacks )
             func( s );
           chunk->loadCallbacks.clear();
 
-          mCoreLogError( "chunk '%s' is loaded with error: %d!\n", chunkPath.c_str(), static_cast<int>( s ) );
+          mCoreLogError( "chunk " mFmtStringHash " is loaded with error: %d!\n",
+                         chunk->id.getHash(), static_cast<int>( s ) );
         } );
 
     return *chunk;
   }
 
-  RenderChunkData& getOrAddRenderChunk( StringId id, const char* name )
+  RenderChunkData& getOrAddRenderChunk( StringId id )
   {
     auto chunkIt = std::find_if( sData->renderChunks.begin(), sData->renderChunks.end(),
                                  [=]( RenderChunkData& data ) { return data.id == id; } );
     return chunkIt != sData->renderChunks.end()
                ? *chunkIt
-               : addRenderChunk( id, name );
+               : addRenderChunk( id );
   }
 } // namespace
 
@@ -199,23 +200,22 @@ void data::updateRenderChunk()
 }
 
 
-void RenderChunk::load( const char* name )
+void RenderChunk::load( StringId id )
 {
   // load is like init, only once can happen
   assert( !data_ );
   assert( ref_.empty() );
 
-  auto  id    = StringId( name );
-  auto& chunk = getOrAddRenderChunk( id, name );
+  auto& chunk = getOrAddRenderChunk( id );
 
   ref_  = sData->renderChunks.getRef( chunk );
   data_ = &chunk;
 }
 
-cti::continuable<RenderChunk> RenderChunk::loadCti( const std::string& name )
+cti::continuable<RenderChunk> RenderChunk::loadCti( StringId id )
 {
   auto result = RenderChunk();
-  result.load( name.c_str() );
+  result.load( id );
 
   if( result.isLoaded() )
     return cti::make_ready_continuable<RenderChunk>( std::move( result ) );

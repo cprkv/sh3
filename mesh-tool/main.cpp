@@ -94,30 +94,24 @@ namespace
 
       auto s = file.write( data, size );
       if( s != StatusOk )
-      {
         hasError = true;
-      }
     }
   };
 
 
   FileWriter openSceneOuputFile( const intermediate::SceneInfo& sceneInfo )
   {
-    auto relativeScenePath = stdfs::path( sceneInfo.path.path );
-    stdfs::create_directories( core::data::getDataPath(
-        relativeScenePath.parent_path().generic_string().c_str() ) );
+    auto outputPath = stdfs::path( sceneInfo.path );
+    stdfs::create_directories( outputPath.parent_path() );
 
-    auto outputPath     = relativeScenePath.replace_extension( ".chunk" ).generic_string();
-    auto outputFullPath = core::data::getDataPath( outputPath.c_str() );
-
-    auto outputFile = FileWriter( outputFullPath.c_str() );
+    auto outputFile = FileWriter( outputPath.string().c_str() );
     if( outputFile.hasError )
     {
-      printf( "error: bad output file: %s\n", outputFullPath.c_str() );
+      printf( "error: bad output file: %s\n", outputPath.string().c_str() );
       abort();
     }
 
-    printf( "writing file %s...\n", outputFullPath.c_str() );
+    printf( "writing file %s...\n", outputPath.string().c_str() );
     return outputFile;
   }
 } // namespace

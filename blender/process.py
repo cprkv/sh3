@@ -27,7 +27,7 @@ args = parser.parse_args()
 MESH_TOOL = '../bin/debug/mesh-tool.exe'
 
 
-def get_game_data_path() -> str:
+def get_game_data_path() -> Path:
   cur_dir = Path.cwd().absolute()
   it = 0
   while True:
@@ -43,7 +43,7 @@ def get_game_data_path() -> str:
       raise Exception('too many iteration of search for project-config passed')
 
 
-GAME_DATA_PATH = get_game_data_path()
+GAME_DATA_PATH: Path = get_game_data_path()
 
 
 def load_scene(import_scene_path):
@@ -121,7 +121,7 @@ def quat_to_map(v):
   }
 
 
-def get_path_info(texture_path_str: str) -> ShPathInfo:
+def get_path_info(texture_path_str: str) -> MtPathInfo:
   # TODO: check is full path
   path = Path(texture_path_str)
   collection = []
@@ -132,13 +132,13 @@ def get_path_info(texture_path_str: str) -> ShPathInfo:
       collection.append(part)
     else:
       base.append(part)
-  info: ShPathInfo = {'base': Path(*base).as_posix(),
+  info: MtPathInfo = {'base': Path(*base).as_posix(),
                       'full': Path(texture_path_str).as_posix(),
                       'path': Path(*collection).as_posix()}
   return info
 
 
-def get_material_info(mat) -> ShMaterialInfo:
+def get_material_info(mat) -> MtMaterialInfo:
   if mat is None:
     print(f"warn: no active material")
     return None
@@ -162,20 +162,20 @@ def get_material_info(mat) -> ShMaterialInfo:
     return None
 
   size: List = [color_node.image.size[0], color_node.image.size[1]]
-  diffuse: ShTextureInfo = {'path': get_path_info(color_node.image.filepath),
+  diffuse: MtTextureInfo = {'path': get_path_info(color_node.image.filepath),
                             'size': size}
 
   diffuse_usage = None
   if mat.blend_method == 'OPAQUE':
-    diffuse_usage = SH_DIFFUSE_USAGE_OPAQUE
+    diffuse_usage = MT_DIFFUSE_USAGE_OPAQUE
   elif mat.blend_method == 'HASHED' or mat.blend_method == 'CLIP':
-    diffuse_usage = SH_DIFFUSE_USAGE_PERFORATING
+    diffuse_usage = MT_DIFFUSE_USAGE_PERFORATING
   elif mat.blend_method == 'BLEND':
-    diffuse_usage = SH_DIFFUSE_USAGE_TRANSPARENT
+    diffuse_usage = MT_DIFFUSE_USAGE_TRANSPARENT
   if diffuse_usage is None:
     print(f"warn: {mat.name} has no blend method! ({mat.blend_method})")
 
-  material_info: ShMaterialInfo = {'name': mat.name,
+  material_info: MtMaterialInfo = {'name': mat.name,
                                    'diffuse': diffuse,
                                    'diffuse_usage': diffuse_usage}
   return material_info
@@ -213,7 +213,7 @@ def path_without_extension(path):
   return Path(path).with_suffix("").as_posix()
 
 
-def get_object_components(obj, mesh_info: ShMeshInfo) -> List[ShComponent]:
+def get_object_components(obj, mesh_info: MtMeshInfo) -> List[ShComponent]:
   obj.rotation_mode = 'QUATERNION'
 
   transform: ShComponent = {'type': TRANSFORM_COMPONENT_TYPE,
@@ -230,84 +230,122 @@ def get_object_components(obj, mesh_info: ShMeshInfo) -> List[ShComponent]:
   return components
 
 
-def do_post_process(scene_postprocess_full_path: Path, scene_info: SceneInfo):
-  if not scene_postprocess_full_path.exists():
-    print("postprocess will not apply as script file is absent")
+def do_post_process(postprocess_path: Path, scene_info: SceneInfo):
+  if not postprocess_path.exists():
+    print(f'postprocess will not apply as script file ({postprocess_path}) is absent')
     return scene_info
-  print("postprocess started")
-  content = ""
-  with scene_postprocess_full_path.open() as f:
+  print('postprocess started')
+  content = ''
+  with postprocess_path.open() as f:
     content = f.read()
   exec(content, globals())
   scene_info = postprocess(scene_info)
-  print("postprocess ended")
+  print('postprocess ended')
   return scene_info
+
+
+def get_collection_objects(collection) -> List[bpy.types.Object]:
+  if collection.hide_render:
+    print(f'scip collection {collection.name}: hidden from render')
+    return None
+  objects = []
+  for obj in collection.objects:
+    if obj.type != 'MESH':
+      continue
+    if obj.hide_render:
+      print(f'scip object {obj.name}: hidden from render')
+      continue
+    objects.append(obj)
+  if len(objects) == 0:
+    print(f'scip collection {collection.name}: no objects')
+    return None
+  return objects
+
+
+def get_mesh_info(obj) -> MtMeshInfo:
+  material_info = get_material_info(obj.active_material)
+  if material_info is None:
+    # print(f"warn: mesh object has bad material: {obj.name}")
+    raise Exception(f"warn: mesh object has bad material: {obj.name}")
+  print(f"material: {material_info}")
+  vertex_data = get_mesh_vertex_datas(obj.data, obj.matrix_world)
+  if len(vertex_data) == 0:
+    raise Exception(f'mesh {obj.name} has no vertices')
+  mesh_info: MtMeshInfo = {'name': obj.name,
+                           'material_info': material_info,
+                           'vertex_data': vertex_data}
+  return mesh_info
+
+
+def get_collection_output_paths(collection):
+  scene_path_info: MtPathInfo = get_path_info(args.input)
+  dirname = Path(scene_path_info['path']).with_suffix('')
+
+  render_chunk_filename = Path(collection.name + '.chunk')
+  render_chunk_id = string_hash((dirname / render_chunk_filename).as_posix())
+  render_chunk_path = (GAME_DATA_PATH / dirname / render_chunk_filename).as_posix()
+
+  scene_filename = Path(collection.name + '.scene.json')
+  scene_path = (GAME_DATA_PATH / dirname / scene_filename).as_posix()
+
+  postprocess_filename = Path(scene_path_info['path']).with_suffix('.py')
+  postprocess_path = GAME_DATA_PATH / postprocess_filename
+
+  return render_chunk_id, render_chunk_path, scene_path, postprocess_path
+
+
+def run_mesh_tool(mt_scene_info: MtSceneInfo):
+  with tempfile.TemporaryFile(delete=False) as file:
+    file.write(umsgpack.packb(mt_scene_info))
+    file.close()
+    try:
+      subprocess.run([MESH_TOOL, file.name], check=True)
+    finally:
+      if not args.keep_data:
+        Path(file.name).unlink()
+      else:
+        print(f'data not deleted: {file.name}')
+
+
+def write_scene_json(output_path: str, scene_info: SceneInfo):
+  print(f'writing {output_path}...')
+  with open(output_path, 'wb') as scene_output:
+    data = json.dumps(scene_info, indent=2).encode()
+    scene_output.write(data)
+
+
+def process_collection(collection):
+  objects = get_collection_objects(collection)
+  if objects is None:
+    return
+
+  render_chunk_id, render_chunk_path, scene_path, postprocess_path = get_collection_output_paths(collection)
+  print(f'scene output: {scene_path}')
+  print(f'render chunk ({render_chunk_id}): {render_chunk_path}')
+  mt_scene_info: MtSceneInfo = {'path': render_chunk_path, 'meshes': []}
+  scene_info: SceneInfo = {'objects': [], 'render_chunks': [render_chunk_id]}
+
+  for obj in objects:
+    mesh_info = get_mesh_info(obj)
+    mt_scene_info['meshes'].append(mesh_info)
+
+    components = get_object_components(obj, mesh_info)
+    object_info: ShObjectInfo = {'id': string_hash(obj.name),
+                                 'components': components}
+    scene_info['objects'].append(object_info)
+
+  run_mesh_tool(mt_scene_info)
+  scene_info = do_post_process(postprocess_path, scene_info)
+  write_scene_json(scene_path, scene_info)
 
 
 def process_scene():
   print(f'processing {args.input}...')
   load_scene(args.input)
 
-  scene_path_info: ShPathInfo = get_path_info(args.input)
-  render_chunk: RenderChunk = {'path': scene_path_info,
-                               'meshes': []}
-  render_chunk_name = Path(render_chunk['path']['path']).with_suffix('.chunk').as_posix()
-  print(scene_path_info)
-
-  scene_info: SceneInfo = {'objects': [], 'render_chunks': [render_chunk_name]}
-
-  for obj in bpy.data.objects:
-    print()
-    print(f"object: {obj.name}  type: {obj.type}")
-    if obj.type != 'MESH':
-      continue
-
-    material_info = get_material_info(obj.active_material)
-    if material_info is None:
-      print(f"warn: mesh object has bad material: {obj.name}")
-      continue
-    print(f"material: {material_info}")
-
-    vertex_data = get_mesh_vertex_datas(obj.data, obj.matrix_world)
-    if len(vertex_data) == 0:
-      raise Exception(f'mesh {obj.name} has no vertices')
-    mesh_info: ShMeshInfo = {'name': obj.name,
-                             'material_info': material_info,
-                             'vertex_data': vertex_data}
-    render_chunk['meshes'].append(mesh_info)
-
-    # todo: this not only for meshes, but also for all other things like lighting, etc.
-    components = get_object_components(obj, mesh_info)
-    object_info: ShObjectInfo = {'id': string_hash(obj.name),
-                                 'components': components}
-    scene_info['objects'].append(object_info)
-
-  with tempfile.TemporaryFile(delete=False) as mesh_file:
-    mesh_file.write(umsgpack.packb(render_chunk))
-    mesh_file.close()
-    try:
-      subprocess.run([MESH_TOOL, mesh_file.name], check=True)
-    finally:
-      if not args.keep_data:
-        Path(mesh_file.name).unlink()
-      else:
-        print(f'data not deleted: {mesh_file.name}')
-
-  scene_output_path = Path(scene_path_info['path']).with_suffix('.scene.json')
-  scene_output_full_path = Path(GAME_DATA_PATH, scene_output_path)
-
-  scene_postprocess_path = Path(scene_path_info['path']).with_suffix('.py')
-  scene_postprocess_full_path = Path(GAME_DATA_PATH, scene_postprocess_path)
-
-  # postprocess scene if it has custom script
-  scene_info = do_post_process(scene_postprocess_full_path, scene_info)
-
-  scene_output_path = Path(scene_path_info['path']).with_suffix('.scene.json')
-  scene_output_full_path = Path(GAME_DATA_PATH, scene_output_path)
-  print(f'writing {scene_output_full_path}...')
-  with open(scene_output_full_path, 'wb') as scene_output:
-    data = json.dumps(scene_info, indent=2).encode()
-    scene_output.write(data)
+  # TODO: optimize render chunks by having common resources in separate chunks
+  for col in bpy.data.collections:
+    process_collection(col)
 
 
 process_scene()

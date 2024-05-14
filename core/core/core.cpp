@@ -1,6 +1,7 @@
 #include "core/core.hpp"
 #include "core/utils.hpp"
 #include <SDL_syswm.h>
+#include <dwmapi.h>
 
 using namespace core;
 
@@ -21,6 +22,31 @@ namespace
   };
 
   StaticData* sData = nullptr;
+
+
+  Status enableDarkMode()
+  {
+    auto sysWmInfo = SDL_SysWMinfo{};
+    SDL_VERSION( &sysWmInfo.version );
+    if( !SDL_GetWindowWMInfo( sData->window, &sysWmInfo ) )
+    {
+      mCoreLogError( "error get window information\n" );
+      core::setErrorDetails( SDL_GetError() );
+      return StatusSystemError;
+    }
+
+    constexpr BOOL useImmersiveDarkMode = true;
+    mCoreCheckHR( DwmSetWindowAttribute(
+        sysWmInfo.info.win.window, DWMWA_USE_IMMERSIVE_DARK_MODE,
+        &useImmersiveDarkMode, sizeof( useImmersiveDarkMode ) ) );
+
+    constexpr COLORREF DARK_COLOR = 0x00505050;
+    mCoreCheckHR( DwmSetWindowAttribute(
+        sysWmInfo.info.win.window, DWMWINDOWATTRIBUTE::DWMWA_CAPTION_COLOR,
+        &DARK_COLOR, sizeof( DARK_COLOR ) ) );
+
+    return StatusOk;
+  }
 
 
   Status initSDL()
@@ -46,6 +72,11 @@ namespace
       mCoreLogError( "create window error\n" );
       core::setErrorDetails( SDL_GetError() );
       return StatusSystemError;
+    }
+
+    if( auto s = enableDarkMode(); s != StatusOk )
+    {
+      mCoreLogError( "dark mode enable failed\n" );
     }
 
     mCoreLog( "SDL2 initialized\n" );

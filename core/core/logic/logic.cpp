@@ -54,6 +54,7 @@ namespace
     } )
         .then( []( data::ShSceneInfo sceneInfo ) {
           auto renderChunks = sceneInfo.render_chunks |
+                              std::views::transform( []( StringHash h ) { return StringId( h ); } ) |
                               std::views::transform( data::RenderChunk::loadCti ) |
                               std::ranges::to<std::vector>();
           return cti::when_all( std::move( sceneInfo ), std::move( renderChunks ) );
