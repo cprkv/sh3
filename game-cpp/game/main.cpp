@@ -15,7 +15,7 @@ int main( int, char** )
   game::registerComponents();
   //core::logic::sceneLoad( "X0/MR1F-MFA/mr1f-pp" );
   //core::logic::sceneLoad( "maps/mall-real/mall-real-split" );
-  core::logic::sceneLoad( "maps/mall-real/mall-real-split/mr11" );
+  core::logic::sceneLoad( "maps/mall-real/mall-real-split/mref" );
 
   for( ;; )
   {

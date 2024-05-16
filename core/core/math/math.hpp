@@ -17,6 +17,8 @@ namespace core::math
     void rotate( f32 upRotationDelta, f32 rightRotationDelta );
     Vec3 getForward() const { return direction_; }
     Vec3 getRight() const { return right_; }
+    void setForward( Vec3 v ) { direction_ = v; }
+    void setRight( Vec3 v ) { right_ = v; }
   };
 
 

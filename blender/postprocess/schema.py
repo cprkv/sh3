@@ -1,17 +1,6 @@
-from typing import List, TypedDict
+from typing import List, TypedDict, Any
 
-
-STRING_HASH_BASIS = 14695981039346656037
-STRING_HASH_PRIME = 1099511628211
-STRING_HASH_TRUNC64 = 2 ** 64
-
-
-def string_hash(s: str) -> int:
-  res = STRING_HASH_BASIS
-  for x in [ord(x) for x in s]:
-    res = (((res ^ x) % STRING_HASH_TRUNC64) * STRING_HASH_PRIME) % STRING_HASH_TRUNC64
-  return res
-
+from .utils import string_hash
 
 #######################################################
 # mesh tool data
@@ -46,8 +35,9 @@ class MtMeshInfo(TypedDict):
 
 
 class MtSceneInfo(TypedDict):
-  path: MtPathInfo
+  path: str
   meshes: List[MtMeshInfo]
+
 
 #######################################################
 # scene data
@@ -74,7 +64,8 @@ REMOVE_SCENE_COMPONENT_TYPE: int = string_hash("RemoveSceneComponent")
 
 
 class ShComponent(TypedDict):
-  pass
+  type: int
+  data: Any
 
 
 class ShObjectInfo(TypedDict):
@@ -84,4 +75,4 @@ class ShObjectInfo(TypedDict):
 
 class SceneInfo(TypedDict):
   objects: List[ShObjectInfo]
-  render_chunks: List[str]
+  render_chunks: List[int]

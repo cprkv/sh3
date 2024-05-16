@@ -1,15 +1,15 @@
-import subprocess
+# noinspection PyUnresolvedReferences
 import bpy
-import argparse
 import bmesh
-import tempfile
-import umsgpack
-import json
-import mathutils
-from pathlib import Path
+from postprocess import *
 from typing import List
-from schema import *
-
+from pathlib import Path
+import umsgpack
+import time
+import json
+import tempfile
+import argparse
+import subprocess
 
 parser = argparse.ArgumentParser(description='Process some integers.')
 parser.add_argument('--input',
@@ -22,7 +22,6 @@ parser.add_argument('--keep-data',
                     default=False,
                     help='do not delete temporary data on exit')
 args = parser.parse_args()
-
 
 MESH_TOOL = '../bin/debug/mesh-tool.exe'
 
@@ -97,30 +96,6 @@ def mesh_triangulate(me):
   bm.free()
 
 
-def vec_to_array(v):
-  result = []
-  for value in v:
-    result.append(value)
-  return result
-
-
-def vec_to_map(v):
-  names = "xyzw"
-  result = {}
-  for index, value in enumerate(v):
-    result[names[index]] = value
-  return result
-
-
-def quat_to_map(v):
-  return {
-      'x': v.x,
-      'y': v.y,
-      'z': v.z,
-      'w': v.w,
-  }
-
-
 def get_path_info(texture_path_str: str) -> MtPathInfo:
   # TODO: check is full path
   path = Path(texture_path_str)
@@ -138,7 +113,7 @@ def get_path_info(texture_path_str: str) -> MtPathInfo:
   return info
 
 
-def get_material_info(mat) -> MtMaterialInfo:
+def get_material_info(mat) -> MtMaterialInfo | None:
   if mat is None:
     print(f"warn: no active material")
     return None
@@ -165,7 +140,7 @@ def get_material_info(mat) -> MtMaterialInfo:
   diffuse: MtTextureInfo = {'path': get_path_info(color_node.image.filepath),
                             'size': size}
 
-  diffuse_usage = None
+  diffuse_usage: str | None = None
   if mat.blend_method == 'OPAQUE':
     diffuse_usage = MT_DIFFUSE_USAGE_OPAQUE
   elif mat.blend_method == 'HASHED' or mat.blend_method == 'CLIP':
@@ -209,55 +184,20 @@ def get_mesh_vertex_datas(mesh, object_matrix) -> List:
   return vertex_datas
 
 
-def path_without_extension(path):
-  return Path(path).with_suffix("").as_posix()
-
-
-def get_object_components(obj, mesh_info: MtMeshInfo) -> List[ShComponent]:
-  obj.rotation_mode = 'QUATERNION'
-
-  transform: ShComponent = {'type': TRANSFORM_COMPONENT_TYPE,
-                            'data': {'position': vec_to_map(obj.location),
-                                     'rotation': quat_to_map(obj.rotation_quaternion),
-                                     'scale': vec_to_map(obj.scale)}}
-
-  diffuse_path = path_without_extension(mesh_info['material_info']['diffuse']['path']['path'])
-  render_mesh: ShComponent = {'type': RENDER_MESH_COMPONENT_TYPE,
-                              'data': {'mesh': string_hash(mesh_info['name']),
-                                       'textureDiffuse': string_hash(diffuse_path)}}
-
-  components: List[ShComponent] = [transform, render_mesh]
-  return components
-
-
-def do_post_process(postprocess_path: Path, scene_info: SceneInfo):
-  if not postprocess_path.exists():
-    print(f'postprocess will not apply as script file ({postprocess_path}) is absent')
-    return scene_info
-  print('postprocess started')
-  content = ''
-  with postprocess_path.open() as f:
-    content = f.read()
-  exec(content, globals())
-  scene_info = postprocess(scene_info)
-  print('postprocess ended')
-  return scene_info
-
-
-def get_collection_objects(collection) -> List[bpy.types.Object]:
+def get_collection_objects(collection) -> List[bpy.types.Object] | None:
   if collection.hide_render:
-    print(f'scip collection {collection.name}: hidden from render')
+    print(f'skip collection {collection.name}: hidden from render')
     return None
   objects = []
   for obj in collection.objects:
-    if obj.type != 'MESH':
+    if obj.type != 'MESH' and obj.type != 'EMPTY':
       continue
     if obj.hide_render:
-      print(f'scip object {obj.name}: hidden from render')
+      print(f'skip object {obj.name}: hidden from render')
       continue
     objects.append(obj)
   if len(objects) == 0:
-    print(f'scip collection {collection.name}: no objects')
+    print(f'skip collection {collection.name}: no objects')
     return None
   return objects
 
@@ -277,7 +217,15 @@ def get_mesh_info(obj) -> MtMeshInfo:
   return mesh_info
 
 
-def get_collection_output_paths(collection):
+@dataclass
+class ScenePaths:
+  render_chunk_id: int
+  render_chunk_path: str
+  scene_path: str
+  scene_virtual_name: str
+
+
+def get_scene_paths(collection) -> ScenePaths:
   scene_path_info: MtPathInfo = get_path_info(args.input)
   dirname = Path(scene_path_info['path']).with_suffix('')
 
@@ -285,13 +233,16 @@ def get_collection_output_paths(collection):
   render_chunk_id = string_hash((dirname / render_chunk_filename).as_posix())
   render_chunk_path = (GAME_DATA_PATH / dirname / render_chunk_filename).as_posix()
 
+  scene_virtual_filename = Path(collection.name)
+  scene_virtual_name = (dirname / scene_virtual_filename).as_posix()
+
   scene_filename = Path(collection.name + '.scene.json')
   scene_path = (GAME_DATA_PATH / dirname / scene_filename).as_posix()
 
-  postprocess_filename = Path(scene_path_info['path']).with_suffix('.py')
-  postprocess_path = GAME_DATA_PATH / postprocess_filename
-
-  return render_chunk_id, render_chunk_path, scene_path, postprocess_path
+  return ScenePaths(render_chunk_id,
+                    render_chunk_path,
+                    scene_path,
+                    scene_virtual_name)
 
 
 def run_mesh_tool(mt_scene_info: MtSceneInfo):
@@ -319,24 +270,25 @@ def process_collection(collection):
   if objects is None:
     return
 
-  render_chunk_id, render_chunk_path, scene_path, postprocess_path = get_collection_output_paths(collection)
-  print(f'scene output: {scene_path}')
-  print(f'render chunk ({render_chunk_id}): {render_chunk_path}')
-  mt_scene_info: MtSceneInfo = {'path': render_chunk_path, 'meshes': []}
-  scene_info: SceneInfo = {'objects': [], 'render_chunks': [render_chunk_id]}
+  paths = get_scene_paths(collection)
+  print(f'scene output: {paths.scene_path}')
+  print(f'render chunk ({paths.render_chunk_id}): {paths.render_chunk_path}')
+  mt_scene_info: MtSceneInfo = {'path': paths.render_chunk_path, 'meshes': []}
+  scene: Scene = Scene(paths.scene_virtual_name)
 
   for obj in objects:
-    mesh_info = get_mesh_info(obj)
-    mt_scene_info['meshes'].append(mesh_info)
+    entity = scene.add_blender_entity(obj)
+    entity.add_component(TransformComponent())
 
-    components = get_object_components(obj, mesh_info)
-    object_info: ShObjectInfo = {'id': string_hash(obj.name),
-                                 'components': components}
-    scene_info['objects'].append(object_info)
+    if obj.type == 'MESH':
+      mesh_info = get_mesh_info(obj)
+      mt_scene_info['meshes'].append(mesh_info)
+      entity.add_component(RenderMeshComponent(mesh_info))
 
+  postprocess(scene)
+  scene_info: SceneInfo = {'objects': scene.serialize(), 'render_chunks': [paths.render_chunk_id]}
   run_mesh_tool(mt_scene_info)
-  scene_info = do_post_process(postprocess_path, scene_info)
-  write_scene_json(scene_path, scene_info)
+  write_scene_json(paths.scene_path, scene_info)
 
 
 def process_scene():
@@ -348,5 +300,7 @@ def process_scene():
     process_collection(col)
 
 
+start_time = time.time()
 process_scene()
-print("done!")
+
+print(f"done! took {(time.time() - start_time)} seconds")

@@ -12,6 +12,7 @@ namespace game
   public:
     mCoreComponent( FreeFlyCameraComponent );
 
+    void deserialize( const Json::object_t& obj ) override;
     void update( const core::system::DeltaTime& dt ) override;
   };
 

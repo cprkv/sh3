@@ -40,11 +40,6 @@ namespace
         sysWmInfo.info.win.window, DWMWA_USE_IMMERSIVE_DARK_MODE,
         &useImmersiveDarkMode, sizeof( useImmersiveDarkMode ) ) );
 
-    constexpr COLORREF DARK_COLOR = 0x00505050;
-    mCoreCheckHR( DwmSetWindowAttribute(
-        sysWmInfo.info.win.window, DWMWINDOWATTRIBUTE::DWMWA_CAPTION_COLOR,
-        &DARK_COLOR, sizeof( DARK_COLOR ) ) );
-
     return StatusOk;
   }
 

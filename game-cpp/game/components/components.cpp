@@ -31,6 +31,20 @@ namespace
 } // namespace
 
 
+void FreeFlyCameraComponent::deserialize( const Json::object_t& obj )
+{
+  obj.at( "position" ).get_to( position_ );
+
+  Vec3 forward;
+  obj.at( "forward" ).get_to( forward );
+  rotation_.setForward( forward );
+
+  Vec3 right;
+  obj.at( "right" ).get_to( right );
+  rotation_.setRight( right );
+}
+
+
 void FreeFlyCameraComponent::update( const core::system::DeltaTime& )
 {
   {
@@ -81,6 +95,7 @@ void FreeFlyCameraComponent::update( const core::system::DeltaTime& )
   }
 
   core::math::Camera camera;
+  camera.focalLength = 28.0f;
   camera.aspectRatio = core::render::gapi::gDevice->viewport.fSize.x /
                        core::render::gapi::gDevice->viewport.fSize.y;
   camera.position  = position_;
