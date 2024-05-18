@@ -4,12 +4,15 @@ import bmesh
 from postprocess import *
 from typing import List
 from pathlib import Path
-import umsgpack
+import gc
+import msgpack
 import time
 import json
 import tempfile
 import argparse
 import subprocess
+
+gc.disable()  # faster
 
 parser = argparse.ArgumentParser(description='Process some integers.')
 parser.add_argument('--input',
@@ -47,6 +50,7 @@ GAME_DATA_PATH: Path = get_game_data_path()
 
 def load_scene(import_scene_path):
   # cleanup scene
+  # TODO: may be simpler and safer to do: `bpy.ops.wm.read_factory_settings(use_empty=True)`
   for material in bpy.data.materials:
     bpy.data.materials.remove(material, do_unlink=True)
 
@@ -247,7 +251,7 @@ def get_scene_paths(collection) -> ScenePaths:
 
 def run_mesh_tool(mt_scene_info: MtSceneInfo):
   with tempfile.TemporaryFile(delete=False) as file:
-    file.write(umsgpack.packb(mt_scene_info))
+    file.write(msgpack.packb(mt_scene_info, use_bin_type=True))
     file.close()
     try:
       subprocess.run([MESH_TOOL, file.name], check=True)

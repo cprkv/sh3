@@ -1,5 +1,5 @@
 #pragma once
-#include "core/common.hpp"
+#include "core/core.hpp"
 #include "schema.hpp"
 
 namespace intermediate

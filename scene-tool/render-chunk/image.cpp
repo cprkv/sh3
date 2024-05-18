@@ -1,36 +1,12 @@
-#include "image.hpp"
-#include "core/data/data.hpp"
-#include "core/fs/file.hpp"
+#include "render-chunk/image.hpp"
+#include "scene-tool.hpp"
+#include "util/detect-changes.hpp"
+#include "core/core.hpp"
 #include <nvtt/nvtt.h>
 #include <DirectXTex.h>
 
 using namespace intermediate;
 namespace dx = DirectX;
-
-
-#define mFailIfHr( ... )                                             \
-  if( HRESULT hr{ __VA_ARGS__ }; FAILED( hr ) )                      \
-  {                                                                  \
-    printf( "Expression = " #__VA_ARGS__ " failed:\nHRESULT %08X\n", \
-            static_cast<unsigned int>( hr ) );                       \
-    abort();                                                         \
-  }
-
-
-#define mNotImplementedIf( ... )                                       \
-  if( __VA_ARGS__ )                                                    \
-  {                                                                    \
-    printf( "feature for " #__VA_ARGS__ " is not yet implemented\n" ); \
-    abort();                                                           \
-  }
-
-
-#define mFailIf( ... )                                                 \
-  if( __VA_ARGS__ )                                                    \
-  {                                                                    \
-    printf( "fatal error: expression (" #__VA_ARGS__ ") is true!\n" ); \
-    abort();                                                           \
-  }
 
 
 namespace
@@ -73,20 +49,20 @@ namespace
 
   u64 textureHash( const TextureInfo& textureInfo )
   {
-    auto path = stdfs::path( textureInfo.path.path ).replace_extension( "" ).generic_string();
-    printf( "texture path: %s\n", path.c_str() );
+    auto path = stdfs::path( textureInfo.path ).lexically_normal().replace_extension( "" ).generic_string();
+    //printf( "texture path: %s\n", path.c_str() );
     return StringId( path );
   }
 
   bool textureEq( const TextureInfo& a, const TextureInfo& b )
   {
-    return a.path.path == b.path.path;
+    return a.path == b.path;
   }
 
 
   std::string getTextureIntermediateOutputPath( const TextureInfo& texture )
   {
-    auto texturePath           = stdfs::path( core::data::getDataPath( texture.path.path.c_str() ) );
+    auto texturePath           = stdfs::path( core::data::getDataPath( stdfs::path( texture.path ) ) );
     auto newName               = texturePath.filename().replace_extension( ".dds" );
     auto intermediateDirectory = texturePath.parent_path() / ".intermediate";
     stdfs::create_directories( intermediateDirectory );
@@ -96,12 +72,20 @@ namespace
 
   void convertToDds( TmpTexture& texture )
   {
-    printf( "converting texture (%s):\n  %s ->\n  %s\n",
-            toString( texture.usage ),
-            texture.info.path.full.c_str(), texture.intermediatePath.c_str() );
+    auto fullPath = getResourcePath( texture.info.path );
+    mFailIf( !stdfs::exists( fullPath ) );
+    mFailIf( !stdfs::is_regular_file( fullPath ) );
+
+    auto changes = FileChanges( fullPath, texture.intermediatePath );
+    if( !changes.isChanged() )
+      return;
+
+    printf( "converting texture (%s):\n  %s ->\n  %s\n", toString( texture.usage ),
+            fullPath.string().c_str(),
+            texture.intermediatePath.c_str() );
 
     nvtt::Surface image;
-    mFailIf( !image.load( texture.info.path.full.c_str() ) );
+    mFailIf( !image.load( fullPath.string().c_str() ) );
 
     const bool enableCuda         = true;
     auto       context            = nvtt::Context{ enableCuda };
@@ -182,6 +166,8 @@ namespace
       image.demultiplyAlpha();
       image.toSrgb();
     }
+
+    changes.markChanged();
   }
 
 
@@ -190,17 +176,11 @@ namespace
     ImageUsage usage = ImageUsage::AlbedoOpaque;
 
     if( diffuseUsage == SH_DIFFUSE_USAGE_OPAQUE )
-    {
       usage = ImageUsage::AlbedoOpaque;
-    }
     else if( diffuseUsage == SH_DIFFUSE_USAGE_PERFORATING )
-    {
       usage = ImageUsage::AlbedoPerforating;
-    }
     else if( diffuseUsage == SH_DIFFUSE_USAGE_TRANSPARENT )
-    {
       usage = ImageUsage::AlbedoTransparent;
-    }
     else
     {
       printf( "unknown diffuse usage: %s\n", diffuseUsage.c_str() );
@@ -220,6 +200,8 @@ namespace
 
   void loadTexture( TmpTexture& texture )
   {
+    printf( "loading texture %s...\n", texture.intermediatePath.c_str() );
+
     auto bytes = std::vector<byte>();
     if( core::fs::readFile( texture.intermediatePath.c_str(), bytes ) != StatusOk )
     {
@@ -282,9 +264,14 @@ void intermediate::processMaterials( const SceneInfo&           sceneInfo,
 {
   std::map<u64, TmpTexture> textures;
 
-  for( const auto& mesh: sceneInfo.meshes )
+  // 0. make unique texture map
+  for( const auto& object: sceneInfo.objects )
   {
-    u64 hash = textureHash( mesh.material_info.diffuse );
+    if( !object.mesh.has_value() )
+      continue;
+
+    auto& mesh = object.mesh.value();
+    u64   hash = textureHash( mesh.material_info.diffuse );
 
     if( auto it = textures.find( hash ); it != textures.end() )
     {
@@ -331,10 +318,14 @@ void intermediate::processMaterials( const SceneInfo&           sceneInfo,
     outputChunk.textures.push_back( texture.result );
   }
 
-  for( const auto& mesh: sceneInfo.meshes )
+  for( const auto& object: sceneInfo.objects )
   {
-    u64  materialId = StringId( mesh.material_info.name );
-    auto materialIt = std::find_if(
+    if( !object.mesh.has_value() )
+      continue;
+
+    auto& mesh       = object.mesh.value();
+    u64   materialId = StringId( mesh.material_info.name );
+    auto  materialIt = std::find_if(
         outputChunk.materials.begin(), outputChunk.materials.end(),
         [=]( const core::data::schema::Material& m ) { return m.id == materialId; } );
 

@@ -44,6 +44,8 @@ namespace core::fs
   };
 
 
+  Status        writeFile( const char* path, const std::vector<byte>& data );
+  inline Status writeFile( std::string path, const std::vector<byte>& data ) { return writeFile( path.c_str(), data ); }
   Status        readFile( const char* path, std::vector<byte>& out );
   inline Status readFile( std::string path, std::vector<byte>& out ) { return readFile( path.c_str(), out ); }
   Status        readFileJson( const char* path, Json& out );

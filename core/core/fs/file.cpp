@@ -119,6 +119,13 @@ Status File::read( void* buffer, size_t size )
 }
 
 
+Status fs::writeFile( const char* path, const std::vector<byte>& data )
+{
+  auto f = File{ path, "wb" };
+  return f.write( data.data(), data.size() );
+}
+
+
 Status fs::readFile( const char* path, std::vector<u8>& out )
 {
   auto f = File{ path, "rb" };
