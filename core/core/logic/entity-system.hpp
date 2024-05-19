@@ -4,15 +4,15 @@
 #include "core/data/render-chunk.hpp"
 
 
-#define mCoreComponent( name, props )                             \
-  inline static StringId getComponentId() { return #name##_sid; } \
-                                                                  \
-  name( core::Entity* entity )                                    \
-      : core::Component( entity )                                 \
-  {}                                                              \
-                                                                  \
-  ~name() override = default;                                     \
-                                                                  \
+#define mCoreComponent( name, props )                                       \
+  inline static constexpr StringId getComponentId() { return #name##_sid; } \
+                                                                            \
+  name( core::Entity* entity )                                              \
+      : core::Component( entity )                                           \
+  {}                                                                        \
+                                                                            \
+  ~name() override = default;                                               \
+                                                                            \
   void deserialize( const Json& obj ) override { deserialize( obj.get<props>() ); }
 
 

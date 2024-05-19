@@ -196,7 +196,7 @@ def _get_collection_objects(collection) -> List[bpy.types.Object] | None:
     return None
   objects = []
   for obj in collection.objects:
-    if obj.type != 'MESH' and obj.type != 'EMPTY':
+    if not obj.type in ['MESH', 'EMPTY', 'CAMERA']:
       continue
     if obj.hide_render:
       print(f'skip object {obj.name}: hidden from render')
