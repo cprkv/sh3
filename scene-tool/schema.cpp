@@ -90,10 +90,11 @@ const msgpack::object& msgpack::adaptor::convert<Quat>::operator()(
 {
   if( o.type != msgpack::type::ARRAY ) throw msgpack::type_error();
   if( o.via.array.size != 4 ) throw msgpack::type_error();
-  v = Quat( o.via.array.ptr[0].as<float>(),
+  // packed as x,y,z,w
+  v = Quat( o.via.array.ptr[3].as<float>(),
+            o.via.array.ptr[0].as<float>(),
             o.via.array.ptr[1].as<float>(),
-            o.via.array.ptr[2].as<float>(),
-            o.via.array.ptr[3].as<float>() );
+            o.via.array.ptr[2].as<float>() );
   return o;
 }
 

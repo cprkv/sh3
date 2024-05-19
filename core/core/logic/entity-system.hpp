@@ -4,14 +4,16 @@
 #include "core/data/render-chunk.hpp"
 
 
-#define mCoreComponent( name )                                    \
+#define mCoreComponent( name, props )                             \
   inline static StringId getComponentId() { return #name##_sid; } \
                                                                   \
   name( core::Entity* entity )                                    \
       : core::Component( entity )                                 \
   {}                                                              \
                                                                   \
-  ~name() override = default;
+  ~name() override = default;                                     \
+                                                                  \
+  void deserialize( const Json& obj ) override { deserialize( obj.get<props>() ); }
 
 
 namespace core
@@ -67,7 +69,7 @@ namespace core
 
     Entity* getEntity() const { return entity_; }
 
-    virtual void deserialize( const Json::object_t& obj );
+    virtual void deserialize( const Json& obj );
     virtual void init();
     virtual void shutdown();
     virtual void update( const system::DeltaTime& dt );

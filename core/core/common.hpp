@@ -4,6 +4,7 @@
 #define SDL_MAIN_HANDLED
 #define CONTINUABLE_WITH_NO_EXCEPTIONS
 #define CONTINUABLE_WITH_CUSTOM_ERROR_TYPE Status
+#define MSGPACK_NO_BOOST
 
 #pragma warning( push )
 #pragma warning( disable : 4702 )

@@ -30,17 +30,11 @@ namespace
 } // namespace
 
 
-void FreeFlyCameraComponent::deserialize( const Json::object_t& obj )
+void FreeFlyCameraComponent::deserialize( FreeFlyCameraComponentProps props )
 {
-  obj.at( "position" ).get_to( position_ );
-
-  Vec3 forward;
-  obj.at( "forward" ).get_to( forward );
-  rotation_.setForward( forward );
-
-  Vec3 right;
-  obj.at( "right" ).get_to( right );
-  rotation_.setRight( right );
+  position_ = props.position;
+  rotation_.setForward( props.forward );
+  rotation_.setRight( props.right );
 }
 
 

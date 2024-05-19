@@ -1,7 +1,7 @@
 #pragma once
 #include "core/common.hpp"
 
-namespace math
+namespace core::math
 {
   inline constexpr f32 gEpsilon3 = 1e-03f;
   inline constexpr f32 gEpsilon5 = 1e-05f;

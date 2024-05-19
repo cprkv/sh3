@@ -50,7 +50,7 @@ namespace
     auto sceneJsonPath = data::getDataPath( ( name + ".scene.json" ).c_str() );
 
     system::task::ctiAsync( [sceneJsonPath]() -> std::expected<data::ShSceneInfo, Status> {
-      return utils::turnIntoExpected( data::parseJsonFile, sceneJsonPath );
+      return utils::turnIntoExpected( data::readJsonFile, sceneJsonPath );
     } )
         .then( []( data::ShSceneInfo sceneInfo ) {
           auto renderChunks = sceneInfo.render_chunks |

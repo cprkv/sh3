@@ -119,7 +119,32 @@ Status File::read( void* buffer, size_t size )
 }
 
 
-Status fs::writeFile( const char* path, const std::vector<byte>& data )
+Status fs::writeFileJson( const char* path, const Json& data )
+{
+  auto indent       = 2;
+  auto indentChar   = ' ';
+  auto ensureAscii  = false;
+  auto errorHandler = Json::error_handler_t::strict;
+
+  std::string str;
+
+  try
+  {
+    str = data.dump( indent, indentChar, ensureAscii, errorHandler );
+  }
+  catch( const Json::exception& ex )
+  {
+    mCoreLogError( "can't serialize scene json: %s\n", ex.what() );
+    core::setErrorDetails( ex.what() );
+    return StatusSystemError;
+  }
+
+  auto span = std::span<const byte>( reinterpret_cast<const byte*>( str.c_str() ), str.size() );
+  return writeFile( path, span );
+}
+
+
+Status fs::writeFile( const char* path, std::span<const byte> data )
 {
   auto f = File{ path, "wb" };
   return f.write( data.data(), data.size() );

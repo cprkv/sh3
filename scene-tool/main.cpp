@@ -2,6 +2,7 @@
 #include "scene-tool.hpp"
 #include "schema.hpp"
 #include "render-chunk/render-chunk.hpp"
+#include "scene/process-scene.hpp"
 
 
 namespace
@@ -17,7 +18,8 @@ namespace
   }
 
 
-  void writeRenderChunk( const intermediate::SceneInfo& sceneInfo, const core::data::schema::Chunk& renderChunk )
+  void writeRenderChunk( const intermediate::SceneInfo&   sceneInfo,
+                         const core::data::schema::Chunk& renderChunk )
   {
     auto outputPath = stdfs::path( core::data::getDataPath( sceneInfo.name + ".chunk" ) );
     stdfs::create_directories( outputPath.parent_path() );
@@ -26,6 +28,17 @@ namespace
     printf( "writing render chunk %s...\n", outputPath.string().c_str() );
     msgpack::pack( outputFile, renderChunk );
     printf( "render chunk written\n" );
+  }
+
+
+  void writeScene( const intermediate::SceneInfo& intermediateSceneInfo,
+                   const core::data::ShSceneInfo& outSceneInfo )
+  {
+    auto outputPath = stdfs::path( core::data::getDataPath( intermediateSceneInfo.name + ".scene.json" ) );
+    stdfs::create_directories( outputPath.parent_path() );
+    printf( "writing scene info %s...\n", outputPath.string().c_str() );
+    mFailIf( core::data::writeJsonFile( outputPath.string(), outSceneInfo ) != StatusOk );
+    printf( "scene info written\n" );
   }
 
 
@@ -38,6 +51,10 @@ namespace
     {
       auto chunk = intermediate::processRenderChunk( sceneInfo );
       writeRenderChunk( sceneInfo, chunk );
+
+      auto scene          = intermediate::processScene( sceneInfo );
+      scene.render_chunks = { StringId( sceneInfo.name + ".chunk" ) };
+      writeScene( sceneInfo, scene );
     }
   }
 } // namespace

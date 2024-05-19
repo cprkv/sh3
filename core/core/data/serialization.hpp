@@ -5,8 +5,8 @@ namespace core::data
 {
   struct ShComponent
   {
-    StringHash     type;
-    Json::object_t data;
+    StringHash type;
+    Json       data;
   };
 
   struct ShObjectInfo
@@ -21,5 +21,6 @@ namespace core::data
     std::vector<StringHash>   render_chunks;
   };
 
-  Status parseJsonFile( std::string path, ShSceneInfo& output );
+  Status readJsonFile( const std::string& path, ShSceneInfo& output );
+  Status writeJsonFile( const std::string& path, const ShSceneInfo& data );
 } // namespace core::data

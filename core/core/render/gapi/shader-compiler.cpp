@@ -68,7 +68,7 @@ namespace
       return S_OK;
     }
 
-    __declspec( nothrow ) HRESULT Close( LPCVOID pData ) override
+    STDMETHOD(Close)( THIS_ LPCVOID pData )
     {
       if( !pData )
       {

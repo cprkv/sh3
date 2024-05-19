@@ -1,6 +1,7 @@
 #pragma once
 #include "core/common.hpp"
 #include "core/data/render-chunk.hpp"
+#include "core/data/serialization.hpp"
 
 namespace core::data
 {

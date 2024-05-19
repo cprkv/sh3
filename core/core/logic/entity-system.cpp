@@ -9,7 +9,7 @@ Entity::Entity( StringId id, Scene* scene )
 {
 }
 
-Entity ::~Entity()
+Entity::~Entity()
 {
   for( auto& it: components_ )
   {
@@ -72,7 +72,7 @@ Component::~Component()
   // TODO: unregister from entity???
 }
 
-void Component::deserialize( const Json::object_t& obj ) { ( void ) obj; }
+void Component::deserialize( const Json& obj ) { ( void ) obj; }
 void Component::init() {}
 void Component::shutdown() {}
 void Component::update( const system::DeltaTime& dt ) { ( void ) dt; }
