@@ -16,16 +16,21 @@ namespace
     }
   }
 
-  void postprocessMREF( meta::Scene& scene )
-  {
-    scene.getEntity( "mref-test-camera" )
-        .addComponent( meta::FreeFlyCameraComponent() );
-  }
-
   void postprocess( const std::string& name, meta::Scene& scene )
   {
     if( name == "maps/mall-real/mall-real-split/mref" )
-      postprocessMREF( scene );
+    {
+      scene.getEntity( "mref-camera" )
+          .addComponent( meta::FreeFlyCameraComponent() );
+
+      scene.getEntity( "mref-portal-mrff" )
+          .addComponent( meta::ScenePortalComponent( StringId( "maps/mall-real/mall-real-split/mrff" ) ) );
+    }
+    else if( name == "maps/mall-real/mall-real-split/mrff" )
+    {
+      scene.getEntity( "mrff-camera" )
+          .addComponent( meta::FreeFlyCameraComponent() );
+    }
 
     postprocessDefault( scene );
   }

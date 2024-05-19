@@ -5,6 +5,7 @@
 using namespace intermediate;
 using namespace intermediate::meta;
 
+
 core::data::ShComponent TransformComponent::build( Entity& entity ) const
 {
   mFailIf( !entity.objectInfo );
@@ -20,6 +21,7 @@ core::data::ShComponent TransformComponent::build( Entity& entity ) const
       .data = Json( props ),
   };
 }
+
 
 core::data::ShComponent RenderMeshComponent::build( Entity& entity ) const
 {
@@ -41,6 +43,7 @@ core::data::ShComponent RenderMeshComponent::build( Entity& entity ) const
   };
 }
 
+
 core::data::ShComponent FreeFlyCameraComponent::build( Entity& entity ) const
 {
   // default props
@@ -61,6 +64,19 @@ core::data::ShComponent FreeFlyCameraComponent::build( Entity& entity ) const
 
   return core::data::ShComponent{
       .type = game::FreeFlyCameraComponent::getComponentId(),
+      .data = Json( props ),
+  };
+}
+
+
+core::data::ShComponent ScenePortalComponent::build( Entity& entity ) const
+{
+  ( void ) entity;
+  auto props = game::ScenePortalComponentProps{
+      .toSceneId = toSceneId.getHash(),
+  };
+  return core::data::ShComponent{
+      .type = game::ScenePortalComponent::getComponentId(),
       .data = Json( props ),
   };
 }

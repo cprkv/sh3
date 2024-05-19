@@ -125,9 +125,42 @@ void RemoveSceneComponent::update( const core::system::DeltaTime& )
   }
 }
 
+void ScenePortalComponent::deserialize( ScenePortalComponentProps props )
+{
+  toSceneId_ = props.toSceneId;
+}
+
+void ScenePortalComponent::init()
+{
+  // NOTE: assuming that this component doesn't move
+  // NOTE: scale is half size of bounding box, and position is it's center
+  // TODO: take rotation into account
+
+  auto* transform = getComponent<core::logic::TransformComponent>();
+
+  bb_.center = transform->position - transform->scale;
+  bb_.bx     = Vec3( transform->scale.x, 0, 0 ) * 2;
+  bb_.by     = Vec3( 0, transform->scale.y, 0 ) * 2;
+  bb_.bz     = Vec3( 0, 0, transform->scale.z ) * 2;
+}
+
+void ScenePortalComponent::update( const core::system::DeltaTime& dt )
+{
+  ( void ) dt;
+
+  // TODO: temporary (not works, need load scene to take stringid as param)
+  // using namespace core::input;
+  // if( isKeyDown( Key0 ) )
+  // {
+  //   core::logic::sceneUnload( sScenes[static_cast<size_t>( sCurrentScene )] );
+  //   core::logic::sceneLoad( sScenes[static_cast<size_t>( sCurrentScene )] );
+  // }
+}
+
 
 void game::registerComponents()
 {
   core::logic::componentRegister<FreeFlyCameraComponent>();
   core::logic::componentRegister<RemoveSceneComponent>();
+  core::logic::componentRegister<ScenePortalComponent>();
 }

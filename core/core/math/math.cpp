@@ -56,6 +56,24 @@ Mat4 Camera::getViewToProjectionTransform() const
 }
 
 
+bool BoundingBox::isInside( Vec3 point ) const
+{
+  // relative point coordinates in bound box coordinates
+  Vec3 p = point - center;
+
+  auto isInsideProjection = [p]( Vec3 axis ) {
+    // normalized
+    auto projPtoAxis = glm::dot( p, axis ) /
+                       glm::length2( axis );
+    return 0.0f <= projPtoAxis && projPtoAxis <= 1.0f;
+  };
+
+  return isInsideProjection( bx ) &&
+         isInsideProjection( by ) &&
+         isInsideProjection( bz );
+}
+
+
 Vec3 core::math::decodeColorHex( u32 value )
 {
   return Vec3(

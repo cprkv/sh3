@@ -35,6 +35,26 @@ namespace core::math
     Mat4 getViewToProjectionTransform() const;
   };
 
+  //     _______
+  //    /     / |
+  //   |     |  |
+  // bz|     |  |
+  //   |     | /by
+  //   |_____|/
+  //  c    bx
+  struct BoundingBox
+  {
+    // bound box center
+    Vec3 center;
+
+    // vectors from 'center', which makes edges, like coordinate system of bounding box
+    Vec3 bx;
+    Vec3 by;
+    Vec3 bz;
+
+    bool isInside( Vec3 point ) const;
+  };
+
 
   Vec3 decodeColorHex( u32 value );
 } // namespace core::math

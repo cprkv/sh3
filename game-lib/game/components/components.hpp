@@ -26,7 +26,7 @@ namespace game
   };
 
 
-  struct RemoveSceneComponent : core::Component
+  struct RemoveSceneComponent : public core::Component
   {
     struct Props
     {
@@ -38,6 +38,27 @@ namespace game
 
     void deserialize( Props ) {}
     void update( const core::system::DeltaTime& ) override;
+  };
+
+
+  struct ScenePortalComponentProps
+  {
+    StringHash toSceneId;
+
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE( ScenePortalComponentProps, toSceneId );
+  };
+
+  class ScenePortalComponent : public core::Component
+  {
+    core::math::BoundingBox bb_;
+    StringId                toSceneId_;
+
+  public:
+    mCoreComponent( ScenePortalComponent, ScenePortalComponentProps );
+
+    void deserialize( ScenePortalComponentProps props );
+    void init() override;
+    void update( const core::system::DeltaTime& dt ) override;
   };
 
 

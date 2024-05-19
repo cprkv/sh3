@@ -72,6 +72,7 @@ function(vy_configure_compiler target)
     -Wno-language-extension-token
     -Wno-ctad-maybe-unsupported
     -Wno-unsafe-buffer-usage # we dont do rust here
+    -Wno-shadow-field-in-constructor # ( StringId toSceneId ) : toSceneId( toSceneId ) {}
 
     # not errors, but still warnings
     #-Wno-error=switch-enum
