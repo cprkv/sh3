@@ -41,3 +41,14 @@ inline stdfs::path getResourcePath( const stdfs::path& path )
   mFailIf( !shResourcesDir );
   return stdfs::path( shResourcesDir ) / path;
 }
+
+inline core::render::BlendMode parseBlendMode( const std::string& bm )
+{
+  core::render::BlendMode blendMode;
+  if( !core::render::fromString( bm, blendMode ) )
+  {
+    printf( "unknown blend mode: %s\n", bm.c_str() );
+    abort();
+  }
+  return blendMode;
+}

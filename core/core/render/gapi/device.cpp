@@ -244,10 +244,12 @@ Status Device::logMessages()
     auto messagePtr = reinterpret_cast<D3D11_MESSAGE*>( message.get() );
     mCoreCheckHR( infoQueue->GetMessage( i, messagePtr, &messageSize ) ); // get the actual message
 
-    //if( messagePtr->Severity == D3D11_MESSAGE_SEVERITY_INFO )
-    //{
-    //  continue; // TODO: too many info logs about state from sciter
-    //}
+    if( messagePtr->Severity == D3D11_MESSAGE_SEVERITY_INFO )
+    {
+      // TODO: too many info logs about state:
+      //       we create buffer and destroy it every frame, and it is very bad...
+      continue;
+    }
 
     const char* category = "<unknown>";
     const char* severity = "<unknown>";
@@ -328,6 +330,7 @@ void Device::enableAlphaBlending( bool enable )
   {
     float blendFactor[4] = { 0, 0, 0, 0 };
     context->OMSetBlendState( blendStateAlpha.Get(), blendFactor, mask );
+    //context->OMSetBlendState( blendStateAlpha.Get(), nullptr, mask );
   }
   else
   {

@@ -1,50 +1,87 @@
 #pragma once
 #include "core/common.hpp"
 #include "core/logic/entity-system.hpp"
+#include "core/render/render.hpp"
 
 namespace core::logic
 {
-
-  struct TransformComponentProps
-  {
-    Vec3 position;
-    Quat rotation;
-    Vec3 scale;
-
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE( TransformComponentProps, position, rotation, scale );
-  };
-
-  class TransformComponent : public core::Component, public TransformComponentProps
+  class TransformComponent : public core::Component
   {
   public:
-    mCoreComponent( TransformComponent, TransformComponentProps );
+    struct Props
+    {
+      Vec3 position = Vec3( 0, 0, 0 );
+      Quat rotation = Quat( 1, 0, 0, 0 );
+      Vec3 scale    = Vec3( 1, 1, 1 );
+
+      NLOHMANN_DEFINE_TYPE_INTRUSIVE( Props, position, rotation, scale );
+    };
+
+    mCoreComponent( TransformComponent );
 
     Mat4 getWorldTransform() const;
-    void deserialize( TransformComponentProps props );
   };
 
 
-  struct RenderMeshComponentProps
+  class MaterialComponent : public core::Component
   {
-    StringId meshId;
-    StringId textureDiffuseId;
+  public:
+    struct Props
+    {
+      StringId                textureDiffuseId;
+      core::render::BlendMode blendMode;
 
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE( RenderMeshComponentProps, meshId, textureDiffuseId );
+      NLOHMANN_DEFINE_TYPE_INTRUSIVE( Props, textureDiffuseId, blendMode );
+    };
+
+    mCoreComponent( MaterialComponent );
+
+    core::render::Texture* textureDiffuse;
+
+    void init() override;
   };
+
 
   class RenderMeshComponent : public core::Component
   {
   public:
-    mCoreComponent( RenderMeshComponent, RenderMeshComponentProps );
+    struct Props
+    {
+      StringId meshId;
 
-    core::render::Mesh*    mesh;
-    core::render::Texture* textureDiffuse;
-    TransformComponent*    transform;
+      NLOHMANN_DEFINE_TYPE_INTRUSIVE( Props, meshId );
+    };
 
-    void deserialize( RenderMeshComponentProps props );
+    mCoreComponent( RenderMeshComponent );
+
+    core::render::Mesh* mesh;
+    MaterialComponent*  material;
+    TransformComponent* transform;
+
     void init() override;
     void update( const core::system::DeltaTime& ) override;
   };
+
+
+  class PointLightComponent : public core::Component
+  {
+  public:
+    struct Props
+    {
+      Vec3 color     = { 1, 0, 0 };
+      f32  intensity = 40;
+
+      NLOHMANN_DEFINE_TYPE_INTRUSIVE( Props, color, intensity );
+    };
+
+    mCoreComponent( PointLightComponent );
+
+    TransformComponent* transform;
+
+    void init() override;
+    void update( const core::system::DeltaTime& ) override;
+  };
+
 
   void registerComponents();
 } // namespace core::logic

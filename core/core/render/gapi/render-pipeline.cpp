@@ -39,21 +39,21 @@ RenderPipeline::~RenderPipeline() noexcept
 }
 
 
-RenderPipeline&& RenderPipeline::useTopology( D3D11_PRIMITIVE_TOPOLOGY topology ) &&
+RenderPipeline& RenderPipeline::useTopology( D3D11_PRIMITIVE_TOPOLOGY topology )
 {
   state_->primitiveTopology = topology;
-  return std::move( *this );
+  return *this;
 }
 
 
-RenderPipeline&& RenderPipeline::useAlphaBlending() &&
+RenderPipeline& RenderPipeline::useAlphaBlending()
 {
   state_->alphaBlendingEnabled = true;
-  return std::move( *this );
+  return *this;
 }
 
 
-RenderPipeline&& RenderPipeline::bind( VertexShader& vertexShader ) &&
+RenderPipeline& RenderPipeline::bind( VertexShader& vertexShader )
 {
   assert( !state_->vertexShader );
   state_->vertexShader = &vertexShader;
@@ -61,11 +61,11 @@ RenderPipeline&& RenderPipeline::bind( VertexShader& vertexShader ) &&
     gDevice->context->VSSetShader( nullptr, nullptr, 0 );
     s->vertexShader = nullptr;
   } );
-  return std::move( *this );
+  return *this;
 }
 
 
-RenderPipeline&& RenderPipeline::bind( PixelShader& pixelShader ) &&
+RenderPipeline& RenderPipeline::bind( PixelShader& pixelShader )
 {
   assert( !state_->pixelShader );
   state_->pixelShader = &pixelShader;
@@ -73,22 +73,22 @@ RenderPipeline&& RenderPipeline::bind( PixelShader& pixelShader ) &&
     gDevice->context->PSSetShader( nullptr, nullptr, 0 );
     s->pixelShader = nullptr;
   } );
-  return std::move( *this );
+  return *this;
 }
 
 
-RenderPipeline&& RenderPipeline::bind( VertexBuffer& vertexBuffer ) &&
+RenderPipeline& RenderPipeline::bind( VertexBuffer& vertexBuffer )
 {
   assert( !state_->vertexBuffer );
   state_->vertexBuffer = &vertexBuffer;
   cleanup_.push_back( []( RenderPipelineState* s ) {
     s->vertexBuffer = nullptr;
   } );
-  return std::move( *this );
+  return *this;
 }
 
 
-RenderPipeline&& RenderPipeline::bind( IndexBuffer& indexBuffer ) &&
+RenderPipeline& RenderPipeline::bind( IndexBuffer& indexBuffer )
 {
   assert( !state_->indexBuffer );
   state_->indexBuffer = &indexBuffer;
@@ -96,11 +96,11 @@ RenderPipeline&& RenderPipeline::bind( IndexBuffer& indexBuffer ) &&
     gDevice->context->IASetIndexBuffer( nullptr, DXGI_FORMAT_UNKNOWN, 0 );
     s->indexBuffer = nullptr;
   } );
-  return std::move( *this );
+  return *this;
 }
 
 
-RenderPipeline&& RenderPipeline::bind( ConstantBuffer& constantBuffer, ConstantBufferTarget target ) &&
+RenderPipeline& RenderPipeline::bind( ConstantBuffer& constantBuffer, ConstantBufferTarget target )
 {
   if( ( target & ConstantBufferTargetVertex ) != 0 )
   {
@@ -118,43 +118,43 @@ RenderPipeline&& RenderPipeline::bind( ConstantBuffer& constantBuffer, ConstantB
     } );
   }
 
-  return std::move( *this );
+  return *this;
 }
 
 
-RenderPipeline&& RenderPipeline::bind( SamplerState& samplerState ) &&
+RenderPipeline& RenderPipeline::bind( SamplerState& samplerState )
 {
   state_->samplerStates.push_back( samplerState.samplerState.Get() );
   cleanup_.push_back( []( RenderPipelineState* s ) {
     s->samplerStates.pop_back();
   } );
-  return std::move( *this );
+  return *this;
 }
 
 
-RenderPipeline&& RenderPipeline::bind( Texture& texture ) &&
+RenderPipeline& RenderPipeline::bind( Texture& texture )
 {
   state_->textureBuffers.push_back( texture.view.Get() );
   cleanup_.push_back( []( RenderPipelineState* s ) {
     s->textureBuffers.pop_back();
     ++s->numTexturesFreed;
   } );
-  return std::move( *this );
+  return *this;
 }
 
 
-RenderPipeline&& RenderPipeline::bind( RenderTarget& renderTarget ) &&
+RenderPipeline& RenderPipeline::bind( RenderTarget& renderTarget )
 {
   state_->textureBuffers.push_back( renderTarget.shaderResourceView.Get() );
   cleanup_.push_back( []( RenderPipelineState* s ) {
     s->textureBuffers.pop_back();
     ++s->numTexturesFreed;
   } );
-  return std::move( *this );
+  return *this;
 }
 
 
-RenderPipeline&& RenderPipeline::bind( DepthStencil& depthStencil ) &&
+RenderPipeline& RenderPipeline::bind( DepthStencil& depthStencil )
 {
   assert( !state_->depthStencil );
   state_->depthStencil = depthStencil.depthStencilView.Get();
@@ -162,11 +162,11 @@ RenderPipeline&& RenderPipeline::bind( DepthStencil& depthStencil ) &&
     s->depthStencil              = nullptr;
     s->reloadOutputMergerTargets = true;
   } );
-  return std::move( *this );
+  return *this;
 }
 
 
-RenderPipeline&& RenderPipeline::bind( DepthStencilState& depthStencilState ) &&
+RenderPipeline& RenderPipeline::bind( DepthStencilState& depthStencilState )
 {
   assert( !state_->depthStencilState );
   state_->depthStencilState = depthStencilState.state.Get();
@@ -175,22 +175,22 @@ RenderPipeline&& RenderPipeline::bind( DepthStencilState& depthStencilState ) &&
     s->depthStencil = nullptr;
     gDevice->context->OMSetDepthStencilState( nullptr, 0u );
   } );
-  return std::move( *this );
+  return *this;
 }
 
 
-RenderPipeline&& RenderPipeline::addTarget( RenderTarget& renderTarget ) &&
+RenderPipeline& RenderPipeline::addTarget( RenderTarget& renderTarget )
 {
   state_->renderTargetViews.push_back( renderTarget.renderTargetView.Get() );
   cleanup_.push_back( []( RenderPipelineState* s ) {
     s->renderTargetViews.pop_back();
     s->reloadOutputMergerTargets = true;
   } );
-  return std::move( *this );
+  return *this;
 }
 
 
-RenderPipeline&& RenderPipeline::addTarget( RenderTargetDefault& renderTargetDefault ) &&
+RenderPipeline& RenderPipeline::addTarget( RenderTargetDefault& renderTargetDefault )
 {
   assert( state_->renderTargetViews.empty() );
   state_->renderTargetViews.push_back( renderTargetDefault.renderTargetView.Get() );
@@ -198,7 +198,7 @@ RenderPipeline&& RenderPipeline::addTarget( RenderTargetDefault& renderTargetDef
     s->renderTargetViews.pop_back();
     s->reloadOutputMergerTargets = true;
   } );
-  return std::move( *this );
+  return *this;
 }
 
 

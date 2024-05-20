@@ -57,21 +57,21 @@ namespace core::render::gapi
     RenderPipeline( RenderPipeline&& ) noexcept            = default;
     RenderPipeline& operator=( RenderPipeline&& ) noexcept = default;
 
-    RenderPipeline&& useTopology( D3D11_PRIMITIVE_TOPOLOGY topology ) &&;
-    RenderPipeline&& useAlphaBlending() &&;
-    RenderPipeline&& bind( VertexShader& vertexShader ) &&;
-    RenderPipeline&& bind( PixelShader& pixelShader ) &&;
-    RenderPipeline&& bind( VertexBuffer& vertexBuffer ) &&;
-    RenderPipeline&& bind( IndexBuffer& indexBuffer ) &&;
-    RenderPipeline&& bind( ConstantBuffer& constantBuffer, ConstantBufferTarget target = ConstantBufferTargetAll ) &&;
-    RenderPipeline&& bind( SamplerState& samplerState ) &&;
-    RenderPipeline&& bind( Texture& texture ) &&;
-    RenderPipeline&& bind( RenderTarget& renderTarget ) &&;
-    RenderPipeline&& bind( DepthStencil& depthStencil ) &&;
-    RenderPipeline&& bind( DepthStencilState& depthStencilState ) &&;
+    RenderPipeline& useTopology( D3D11_PRIMITIVE_TOPOLOGY topology );
+    RenderPipeline& useAlphaBlending();
+    RenderPipeline& bind( VertexShader& vertexShader );
+    RenderPipeline& bind( PixelShader& pixelShader );
+    RenderPipeline& bind( VertexBuffer& vertexBuffer );
+    RenderPipeline& bind( IndexBuffer& indexBuffer );
+    RenderPipeline& bind( ConstantBuffer& constantBuffer, ConstantBufferTarget target = ConstantBufferTargetAll );
+    RenderPipeline& bind( SamplerState& samplerState );
+    RenderPipeline& bind( Texture& texture );
+    RenderPipeline& bind( RenderTarget& renderTarget );
+    RenderPipeline& bind( DepthStencil& depthStencil );
+    RenderPipeline& bind( DepthStencilState& depthStencilState );
 
-    RenderPipeline&& addTarget( RenderTarget& renderTarget ) &&;
-    RenderPipeline&& addTarget( RenderTargetDefault& renderTargetDefault ) &&;
+    RenderPipeline& addTarget( RenderTarget& renderTarget );
+    RenderPipeline& addTarget( RenderTargetDefault& renderTargetDefault );
 
     void draw();
   };

@@ -66,52 +66,96 @@ void RenderPass3D::render( RenderList& renderList )
   renderTarget.clear( Vec4( 0, 1, 0, 1 ) );
 
   {
-    auto& vsConstant                             = gCommonRenderData->oldFullVSConstant;
-    vsConstant->gSceneLights.ambient             = Vec3( 0.1f );
-    vsConstant->gSceneLights.count               = 1;
-    vsConstant->gSceneLights.lights[0].position  = Vec3( 0 );
-    vsConstant->gSceneLights.lights[0].color     = core::math::decodeColorHex( 0xE7'8C'FF );
-    vsConstant->gSceneLights.lights[0].intensity = 40;
-    vsConstant->gViewPos                         = renderList.viewPosition;
-    vsConstant->gWorldToView                     = renderList.worldToViewTransform;
-    vsConstant->gViewToProjection                = renderList.viewToProjectionTransform;
-    if( vsConstant.update() != StatusOk )
+    auto& vsConstant                 = gCommonRenderData->oldFullVSConstant;
+    auto& psConstant                 = gCommonRenderData->oldFullPSConstant;
+    vsConstant->gSceneLights.ambient = Vec3( 0.1f );
+
+    size_t lightsCount             = std::min( std::size( vsConstant->gSceneLights.lights ), renderList.lights.size() );
+    vsConstant->gSceneLights.count = static_cast<decltype( vsConstant->gSceneLights.count )>( lightsCount );
+
+    for( size_t i = 0; i < lightsCount; ++i )
     {
-      mCoreLog( "update constant failed" );
-      return;
+      vsConstant->gSceneLights.lights[i].position  = renderList.lights[i].position;
+      vsConstant->gSceneLights.lights[i].color     = renderList.lights[i].color;
+      vsConstant->gSceneLights.lights[i].intensity = renderList.lights[i].intensity;
     }
+
+    vsConstant->gViewPos          = renderList.viewPosition;
+    vsConstant->gWorldToView      = renderList.worldToViewTransform;
+    vsConstant->gViewToProjection = renderList.viewToProjectionTransform;
+    if( vsConstant.update() != StatusOk ) // TODO
+      abort();
 
     auto& vsConstantModel = gCommonRenderData->oldFullVSConstantModel;
 
-    auto rpState = RenderPipelineState();
+    auto rpState        = RenderPipelineState();
+    auto renderPipeline = RenderPipeline( rpState );
 
-    auto rp = RenderPipeline( rpState )
-                  .useTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST )
-                  .bind( gCommonRenderData->shaderTable.oldFull.vertexShader )
-                  .bind( gCommonRenderData->shaderTable.oldFull.pixelShader )
-                  .bind( vsConstant, ConstantBufferTargetVertex )
-                  .bind( vsConstantModel, ConstantBufferTargetVertex )
-                  .bind( depthStencil )
-                  .bind( gCommonRenderData->depthStencilStateEnabled )
-                  .bind( gDevice->samplerStateClamp )
-                  .addTarget( renderTarget );
+    renderPipeline
+        .useTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST )
+        .bind( gCommonRenderData->shaderTable.oldFull.vertexShader )
+        .bind( gCommonRenderData->shaderTable.oldFull.pixelShader )
+        .bind( vsConstant, ConstantBufferTargetVertex )
+        .bind( vsConstantModel, ConstantBufferTargetVertex )
+        .bind( psConstant, ConstantBufferTargetPixel )
+        .bind( depthStencil )
+        .bind( gCommonRenderData->depthStencilStateEnabled )
+        .bind( gDevice->samplerStateClamp )
+        .addTarget( renderTarget );
+
+    std::ranges::sort( renderList.drawables, []( const RenderList::Drawable& a, const RenderList::Drawable& b ) {
+      return a.blendMode < b.blendMode;
+    } );
 
     for( auto& drawable: renderList.drawables )
     {
       vsConstantModel->gModelToWorld      = drawable.worldTransform;
       vsConstantModel->gWorldInvTranspose = glm::inverseTranspose( vsConstantModel->gModelToWorld );
-      if( vsConstantModel.update() != StatusOk )
-      {
-        mCoreLog( "update constant failed" );
-        return;
-      }
+      if( vsConstantModel.update() != StatusOk ) // TODO
+        abort();
 
-      rp.extend()
+      psConstant->gAlphaHash = static_cast<u32>( drawable.blendMode == BlendMode_AlphaHash );
+      if( psConstant.update() != StatusOk ) // TODO
+        abort();
+
+      auto currentRp = renderPipeline.extend();
+
+      if( drawable.blendMode == BlendMode_AlphaBlend )
+        currentRp.useAlphaBlending();
+
+      currentRp
           .bind( drawable.mesh->indexBuffer )
           .bind( drawable.mesh->vertexBuffer )
           .bind( drawable.diffuseTexture->texture )
           .draw();
     }
+  }
+
+  // lines
+  if( !renderList.lines.empty() )
+  {
+    auto vertexBuffer = gapi::VertexBuffer();
+    auto abv          = makeArrayBytesView( renderList.lines );
+    if( vertexBuffer.init( "line-buffer", abv ) != StatusOk ) // TODO
+      abort();
+
+    gCommonRenderData->lineVSConstant->gWorldToProjection =
+        renderList.viewToProjectionTransform *
+        renderList.worldToViewTransform;
+    if( gCommonRenderData->lineVSConstant.update() != StatusOk ) // TODO
+      abort();
+
+    auto rpState = RenderPipelineState();
+    RenderPipeline( rpState )
+        .useTopology( D3D11_PRIMITIVE_TOPOLOGY_LINELIST )
+        .useAlphaBlending()
+        .bind( gCommonRenderData->shaderTable.line.vertexShader )
+        .bind( gCommonRenderData->shaderTable.line.pixelShader )
+        .bind( gCommonRenderData->lineVSConstant )
+        .bind( gCommonRenderData->depthStencilStateDisabled )
+        .bind( vertexBuffer )
+        .addTarget( renderTarget )
+        .draw();
   }
 
   renderFullScreenOnViewportMS( renderTarget );

@@ -82,7 +82,7 @@ namespace core::render::gapi
     u32                  elementCount = 0;
     DXGI_FORMAT          format;
 
-    Status init( ArrayBytesView bytes );
+    Status init( const char* name, ArrayBytesView bytes );
     void   use() const;
   };
 
@@ -93,7 +93,7 @@ namespace core::render::gapi
     u32                  elementSize  = 0;
     u32                  elementCount = 0;
 
-    Status init( ArrayBytesView bytes );
+    Status init( const char* name, ArrayBytesView bytes );
     void   use();
   };
 

@@ -7,13 +7,22 @@ namespace
 {
   void postprocessDefault( meta::Scene& scene )
   {
-    if( !std::ranges::any_of( scene.entities, []( const auto& e ) {
-          return e.hasComponent( meta::FreeFlyCameraComponent::id );
-        } ) )
+    auto freeFlyComponentFilter = []( const meta::Entity& e ) {
+      return e.hasComponent( game::FreeFlyCameraComponent::getComponentId() );
+    };
+
+    if( !std::ranges::any_of( scene.entities, freeFlyComponentFilter ) )
     {
       scene.addEntity( "debug-free-fly" )
-          .addComponent( meta::FreeFlyCameraComponent() );
+          .addComponent<core::logic::TransformComponent>()
+          .addComponent<game::FreeFlyCameraComponent>();
     }
+
+    std::ranges::find_if( scene.entities, freeFlyComponentFilter )
+        ->addComponent<core::logic::PointLightComponent>( {
+            .color     = Vec3( 1, 1, 1 ),
+            .intensity = 50,
+        } );
   }
 
   void postprocess( const std::string& name, meta::Scene& scene )
@@ -21,15 +30,17 @@ namespace
     if( name == "maps/mall-real/mall-real-split/mref" )
     {
       scene.getEntity( "mref-camera" )
-          .addComponent( meta::FreeFlyCameraComponent() );
+          .addComponent( meta::automatic::freeFlyCamera );
 
       scene.getEntity( "mref-portal-mrff" )
-          .addComponent( meta::ScenePortalComponent( StringId( "maps/mall-real/mall-real-split/mrff" ) ) );
+          .addComponent<game::ScenePortalComponent>( {
+              .toSceneId = StringId( "maps/mall-real/mall-real-split/mrff" ),
+          } );
     }
     else if( name == "maps/mall-real/mall-real-split/mrff" )
     {
       scene.getEntity( "mrff-camera" )
-          .addComponent( meta::FreeFlyCameraComponent() );
+          .addComponent( meta::automatic::freeFlyCamera );
     }
 
     postprocessDefault( scene );
@@ -44,10 +55,13 @@ core::data::ShSceneInfo intermediate::processScene( const SceneInfo& sceneInfo )
   for( const auto& obj: sceneInfo.objects )
   {
     auto& entity = scene.addEntity( &obj );
-    entity.addComponent( meta::TransformComponent() );
+    entity.addComponent( meta::automatic::transform );
 
     if( obj.mesh )
-      entity.addComponent( meta::RenderMeshComponent() );
+    {
+      entity.addComponent( meta::automatic::material );
+      entity.addComponent( meta::automatic::renderMesh );
+    }
   }
 
   postprocess( sceneInfo.name, scene );

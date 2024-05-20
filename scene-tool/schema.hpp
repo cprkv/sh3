@@ -57,17 +57,13 @@ namespace intermediate
     MSGPACK_DEFINE_MAP( path, size );
   };
 
-  inline static constexpr std::string_view SH_DIFFUSE_USAGE_OPAQUE      = "Opaque";
-  inline static constexpr std::string_view SH_DIFFUSE_USAGE_TRANSPARENT = "Transparent";
-  inline static constexpr std::string_view SH_DIFFUSE_USAGE_PERFORATING = "Perforating";
-
   struct MaterialInfo
   {
     std::string name;
     TextureInfo diffuse;
-    std::string diffuse_usage;
+    std::string blend_mode;
 
-    MSGPACK_DEFINE_MAP( name, diffuse, diffuse_usage );
+    MSGPACK_DEFINE_MAP( name, diffuse, blend_mode );
   };
 
   struct MeshInfo

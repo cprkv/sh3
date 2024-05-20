@@ -9,12 +9,6 @@ namespace intermediate::meta
   struct Scene;
   struct Entity;
 
-  struct IComponent
-  {
-    virtual ~IComponent()                                         = default;
-    virtual core::data::ShComponent build( Entity& entity ) const = 0;
-  };
-
   struct Entity
   {
     std::string                          name;
@@ -25,8 +19,19 @@ namespace intermediate::meta
     StringId getId() { return StringId( name ); }
 
     bool    hasComponent( StringId id ) const;
-    Entity& addComponent( const IComponent& component );
-    auto    serialize() const -> core::data::ShObjectInfo;
+    Entity& addComponent( core::data::ShComponent component );
+    Entity& addComponent( std::function<core::data::ShComponent( Entity& )> factory );
+
+    template<typename TComponent>
+    Entity& addComponent( typename TComponent::Props props = {} )
+    {
+      return addComponent( core::data::ShComponent{
+          .type = TComponent::getComponentId(),
+          .data = Json( props ),
+      } );
+    }
+
+    auto serialize() const -> core::data::ShObjectInfo;
   };
 
   struct Scene

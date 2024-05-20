@@ -11,10 +11,16 @@ bool Entity::hasComponent( StringId id ) const
   } );
 }
 
-Entity& Entity::addComponent( const IComponent& component )
+Entity& Entity::addComponent( core::data::ShComponent component )
 {
-  components.emplace_back( component.build( *this ) );
+  components.emplace_back( std::move( component ) );
   return *this;
+}
+
+Entity& Entity::addComponent( std::function<core::data::ShComponent( Entity& )> factory )
+{
+  assert( objectInfo );
+  return addComponent( factory( *this ) );
 }
 
 core::data::ShObjectInfo Entity::serialize() const

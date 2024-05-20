@@ -45,7 +45,7 @@ void Entity::update( const system::DeltaTime& dt )
   }
 }
 
-Component* Entity::getComponent( StringId componentId )
+Component* Entity::tryGetComponent( StringId componentId )
 {
   for( auto& it: components_ )
     if( it.id == componentId )

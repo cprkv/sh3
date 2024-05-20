@@ -21,9 +21,8 @@ namespace core::data
 
     static cti::continuable<RenderChunk> loadCti( StringId id );
 
-    core::render::Material* getMaterial( StringId id );
-    core::render::Mesh*     getMesh( StringId id );
-    core::render::Texture*  getTexture( StringId id );
+    core::render::Mesh*    getMesh( StringId id );
+    core::render::Texture* getTexture( StringId id );
   };
 
   using RenderChunks     = std::vector<data::RenderChunk>;

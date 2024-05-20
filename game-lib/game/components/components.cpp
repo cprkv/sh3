@@ -30,11 +30,11 @@ namespace
 } // namespace
 
 
-void FreeFlyCameraComponent::deserialize( FreeFlyCameraComponentProps props )
+void FreeFlyCameraComponent::init()
 {
-  position_ = props.position;
-  rotation_.setForward( props.forward );
-  rotation_.setRight( props.right );
+  transform = getComponent<core::logic::TransformComponent>();
+  rotation.setForward( props.forward );
+  rotation.setRight( props.right );
 }
 
 
@@ -61,7 +61,7 @@ void FreeFlyCameraComponent::update( const core::system::DeltaTime& )
       delta *= rotateFactor;
 
       // TODO: this is messed up: delta.x should be positive...
-      rotation_.rotate( -delta.x, delta.y );
+      rotation.rotate( -delta.x, delta.y );
     }
 
     // translation
@@ -80,10 +80,10 @@ void FreeFlyCameraComponent::update( const core::system::DeltaTime& )
         deltaForward = -1;
 
       f32 moveFactor = core::loopGetDeltaTime().getMsF() * 0.01f;
-      position_ += deltaForward * moveFactor * rotation_.getForward();
+      transform->props.position += deltaForward * moveFactor * rotation.getForward();
 
       // TODO: this is messed up: KeyA should add positive to deltaRight but it moves left...
-      position_ += deltaRight * moveFactor * rotation_.getRight();
+      transform->props.position += deltaRight * moveFactor * rotation.getRight();
     }
   }
 
@@ -91,8 +91,9 @@ void FreeFlyCameraComponent::update( const core::system::DeltaTime& )
   camera.focalLength = 28.0f;
   camera.aspectRatio = core::render::gapi::gDevice->viewport.fSize.x /
                        core::render::gapi::gDevice->viewport.fSize.y;
-  camera.position  = position_;
-  camera.direction = rotation_.getForward();
+  camera.position  = transform->props.position;
+  camera.direction = rotation.getForward();
+
 
   auto& renderList                     = core::render::getRenderList();
   renderList.viewPosition              = camera.position;
@@ -125,10 +126,6 @@ void RemoveSceneComponent::update( const core::system::DeltaTime& )
   }
 }
 
-void ScenePortalComponent::deserialize( ScenePortalComponentProps props )
-{
-  toSceneId_ = props.toSceneId;
-}
 
 void ScenePortalComponent::init()
 {
@@ -138,15 +135,18 @@ void ScenePortalComponent::init()
 
   auto* transform = getComponent<core::logic::TransformComponent>();
 
-  bb_.center = transform->position - transform->scale;
-  bb_.bx     = Vec3( transform->scale.x, 0, 0 ) * 2;
-  bb_.by     = Vec3( 0, transform->scale.y, 0 ) * 2;
-  bb_.bz     = Vec3( 0, 0, transform->scale.z ) * 2;
+  bb.center = transform->props.position - transform->props.scale;
+  bb.bx     = Vec3( transform->props.scale.x, 0, 0 ) * 2;
+  bb.by     = Vec3( 0, transform->props.scale.y, 0 ) * 2;
+  bb.bz     = Vec3( 0, 0, transform->props.scale.z ) * 2;
 }
 
 void ScenePortalComponent::update( const core::system::DeltaTime& dt )
 {
   ( void ) dt;
+
+  //constexpr auto color = Vec4( 0.5, 0, 0, 0.01f );
+  bb.debugDraw();
 
   // TODO: temporary (not works, need load scene to take stringid as param)
   // using namespace core::input;

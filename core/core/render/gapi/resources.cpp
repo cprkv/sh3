@@ -41,6 +41,12 @@ namespace
 } // namespace
 
 
+#ifdef _DEBUG
+#  define mSetDebugName( obj, name ) obj->SetPrivateData( WKPDID_D3DDebugObjectName, static_cast<UINT>( strlen( name ) ), name )
+#else
+#  define mSetDebugName( obj, name ) ( void ) name
+#endif
+
 // -----------------------------------------------------------------------------
 // -- SamplerState
 // -----------------------------------------------------------------------------
@@ -201,7 +207,7 @@ Status DepthStencilState::init( bool enabled )
 // -- IndexBuffer
 // -----------------------------------------------------------------------------
 
-Status IndexBuffer::init( ArrayBytesView bytes )
+Status IndexBuffer::init( const char* name, ArrayBytesView bytes )
 {
   assert( bytes.getElementSize() == sizeof( u32 ) ||
           bytes.getElementSize() == sizeof( u16 ) );
@@ -222,6 +228,7 @@ Status IndexBuffer::init( ArrayBytesView bytes )
   elementCount = static_cast<UINT>( bytes.getSize() );
   format       = bytes.getElementSize() == sizeof( u32 ) ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_R16_UINT;
   mCoreCheckHR( gDevice->device->CreateBuffer( &bufferDesc, &initialData, &buffer ) );
+  mSetDebugName( buffer, name );
   return StatusOk;
 }
 
@@ -235,7 +242,7 @@ void IndexBuffer::use() const
 // -- VertexBuffer
 // -----------------------------------------------------------------------------
 
-Status VertexBuffer::init( ArrayBytesView bytes )
+Status VertexBuffer::init( const char* name, ArrayBytesView bytes )
 {
   auto bufferDesc = D3D11_BUFFER_DESC{
       .ByteWidth           = static_cast<UINT>( bytes.getElementSize() * bytes.getSize() ),
@@ -253,6 +260,7 @@ Status VertexBuffer::init( ArrayBytesView bytes )
   elementSize  = static_cast<u32>( bytes.getElementSize() );
   elementCount = static_cast<u32>( bytes.getSize() );
   mCoreCheckHR( gDevice->device->CreateBuffer( &bufferDesc, &initialData, &buffer ) );
+  mSetDebugName( buffer, name );
   return StatusOk;
 }
 
@@ -431,10 +439,10 @@ Status Texture::init( const data::schema::Texture& textureSchema )
   mCoreCheckHR( gDevice->device->CreateShaderResourceView( texture.Get(), &viewDesc, &view ) );
 
 #ifdef _DEBUG
-  auto name    = "id:" + std::to_string( textureSchema.id );
-  UINT nameLen = static_cast<UINT>( name.size() );
-  texture->SetPrivateData( WKPDID_D3DDebugObjectName, nameLen, name.c_str() );
-  view->SetPrivateData( WKPDID_D3DDebugObjectName, nameLen, name.c_str() );
+  char name[128] = { 0 };
+  sprintf( name, "tex-" mFmtStringHash, textureSchema.id );
+  mSetDebugName( texture, name );
+  mSetDebugName( view, name );
 #endif
 
   return StatusOk;

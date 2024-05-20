@@ -31,7 +31,8 @@ void intermediate::processMesh( const std::string&            name,
                                 const intermediate::MeshInfo& meshInfo,
                                 core::data::schema::Chunk&    chunk )
 {
-  printf( "processing mesh %s\n", name.c_str() );
+  auto id = StringId( name ); // TODO: incorrect if obj has more than 1 meshes
+  printf( "processing mesh %s hash: " mFmtU64 "\n", name.c_str(), id.getHash() );
 
   bool verticesIsCountOf3 = ( meshInfo.vertex_data.size() % 3 ) == 0;
   mFailIf( !verticesIsCountOf3 );
@@ -67,7 +68,7 @@ void intermediate::processMesh( const std::string&            name,
                                indexCount, vertexCount );
 
   auto outputMesh = core::data::schema::Mesh{
-      .id           = StringId( name ), // TODO: incorrect if obj has more than 1 meshes
+      .id           = id,
       .indexBuffer  = std::move( indices ),
       .vertexBuffer = std::move( vertices ),
   };

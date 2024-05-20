@@ -45,22 +45,9 @@ def string_hash(s: str) -> int:
 # mesh tool data
 #######################################################
 
-MT_DIFFUSE_USAGE_OPAQUE = "Opaque"
-MT_DIFFUSE_USAGE_TRANSPARENT = "Transparent"
-MT_DIFFUSE_USAGE_PERFORATING = "Perforating"
-
-
-# class Vec3fDict(TypedDict):
-#   x: float
-#   y: float
-#   z: float
-
-
-# class Vec4fDict(TypedDict):
-#   x: float
-#   y: float
-#   z: float
-#   w: float
+MT_BLEND_MODE_OPAQUE = "Opaque"
+MT_BLEND_MODE_ALPHA_HASH = "AlphaHash"
+MT_BLEND_MODE_ALPHA_BLEND = "AlphaBlend"
 
 
 Vec2i = List[int]
@@ -77,7 +64,7 @@ class MtTextureInfo(TypedDict):
 class MtMaterialInfo(TypedDict):
   name: str
   diffuse: MtTextureInfo
-  diffuse_usage: str
+  blend_mode: str
 
 
 class MtMeshInfo(TypedDict):

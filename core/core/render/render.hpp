@@ -7,26 +7,55 @@
 
 namespace core::render
 {
+#define xBlendModeEnum( X ) \
+  X( BlendMode, Opaque )    \
+  X( BlendMode, AlphaHash ) \
+  X( BlendMode, AlphaBlend )
+
+  mCoreDeclareEnum( BlendMode, xBlendModeEnum );
+
+
   class RenderList
   {
   public:
     struct Drawable
     {
-      Mesh*    mesh;
-      Texture* diffuseTexture;
-      Mat4     worldTransform;
+      Mesh*     mesh;
+      Texture*  diffuseTexture;
+      BlendMode blendMode;
+      Mat4      worldTransform;
     };
 
     std::vector<Drawable> drawables;
+
+    struct Point
+    {
+      Vec3 position;
+      Vec4 color;
+    };
+
+    std::vector<Point> lines; // must be pairs (line list)
+
+    struct PointLight
+    {
+      Vec3 position;
+      Vec3 color;
+      f32  intensity;
+    };
+    std::vector<PointLight> lights;
 
     Vec3 viewPosition;
     Mat4 worldToViewTransform;
     Mat4 viewToProjectionTransform;
 
-    // TODO: camera
-    void addMesh( Mesh* mesh, Texture* diffuseTexture, Mat4 worldTransform );
     void submit();
-    void clear() { drawables.clear(); }
+
+    void clear()
+    {
+      drawables.clear();
+      lines.clear();
+      lights.clear();
+    }
   };
 
 
@@ -38,8 +67,10 @@ namespace core::render
     gapi::DepthStencilState depthStencilStateDisabled;
 
     gapi::ConstantBufferData<shaders::Texture2DVSConstantBuffer>    texture2DVSConstant;
+    gapi::ConstantBufferData<shaders::OldFullPSConstantBuffer>      oldFullPSConstant;
     gapi::ConstantBufferData<shaders::OldFullVSConstantBuffer>      oldFullVSConstant;
     gapi::ConstantBufferData<shaders::OldFullVSConstantBufferModel> oldFullVSConstantModel;
+    gapi::ConstantBufferData<shaders::LineVSConstantBuffer>         lineVSConstant;
   };
 
 

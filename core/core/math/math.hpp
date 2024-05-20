@@ -53,6 +53,7 @@ namespace core::math
     Vec3 bz;
 
     bool isInside( Vec3 point ) const;
+    void debugDraw( Vec4 color = { 1, 0, 0, 1 } ) const;
   };
 
 

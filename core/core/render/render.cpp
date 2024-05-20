@@ -39,17 +39,6 @@ namespace
 } // namespace
 
 
-void RenderList::addMesh( Mesh* mesh, Texture* diffuseTexture, Mat4 worldTransform )
-{
-  auto drawable = Drawable{
-      .mesh           = mesh,
-      .diffuseTexture = diffuseTexture,
-      .worldTransform = worldTransform,
-  };
-  drawables.push_back( drawable );
-}
-
-
 // TODO: allow multiple submit to draw different parts... with different perspective, or different type like RenderList2D...
 void RenderList::submit()
 {
@@ -80,13 +69,15 @@ Status core::render::initialize( HWND windowHandle )
     auto shadersPath  = data::getDataPath( "shaders" );
     mCoreCheckStatus( gCommonRenderData->shaderTable.init( std::move( shadersPath ) ) );
 
-    mCoreCheckStatus( gCommonRenderData->fullscreenQuadVertexBuffer.init( makeArrayBytesView( sFullscreenQuadData ) ) );
+    mCoreCheckStatus( gCommonRenderData->fullscreenQuadVertexBuffer.init( "fullscreen-quad", makeArrayBytesView( sFullscreenQuadData ) ) );
     mCoreCheckStatus( gCommonRenderData->depthStencilStateEnabled.init( true ) );
     mCoreCheckStatus( gCommonRenderData->depthStencilStateDisabled.init( false ) );
 
     mCoreCheckStatus( gCommonRenderData->texture2DVSConstant.init( ConstantBufferTargetVertex ) );
+    mCoreCheckStatus( gCommonRenderData->oldFullPSConstant.init( ConstantBufferTargetPixel ) );
     mCoreCheckStatus( gCommonRenderData->oldFullVSConstant.init( ConstantBufferTargetVertex ) );
     mCoreCheckStatus( gCommonRenderData->oldFullVSConstantModel.init( ConstantBufferTargetVertex ) );
+    mCoreCheckStatus( gCommonRenderData->lineVSConstant.init( ConstantBufferTargetVertex ) );
   }
 
   // static data

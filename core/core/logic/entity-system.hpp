@@ -4,16 +4,18 @@
 #include "core/data/render-chunk.hpp"
 
 
-#define mCoreComponent( name, props )                                       \
-  inline static constexpr StringId getComponentId() { return #name##_sid; } \
-                                                                            \
-  name( core::Entity* entity )                                              \
-      : core::Component( entity )                                           \
-  {}                                                                        \
-                                                                            \
-  ~name() override = default;                                               \
-                                                                            \
-  void deserialize( const Json& obj ) override { deserialize( obj.get<props>() ); }
+#define mCoreComponent( Class )                                              \
+  Props props;                                                               \
+                                                                             \
+  inline static constexpr StringId getComponentId() { return #Class##_sid; } \
+                                                                             \
+  Class( core::Entity* entity )                                              \
+      : core::Component( entity )                                            \
+  {}                                                                         \
+                                                                             \
+  ~Class() override = default;                                               \
+                                                                             \
+  void deserialize( const Json& obj ) override { props = obj.get<Props>(); }
 
 
 namespace core
@@ -48,8 +50,11 @@ namespace core
     void       init();
     void       shutdown();
     void       update( const system::DeltaTime& dt );
-    Component* getComponent( StringId componentId );
+    Component* tryGetComponent( StringId componentId );
     Component* addComponent( StringId componentId, Component* component );
+
+    template<typename T>
+    T* tryGetComponent();
 
     template<typename T>
     T* getComponent();
@@ -73,6 +78,9 @@ namespace core
     virtual void init();
     virtual void shutdown();
     virtual void update( const system::DeltaTime& dt );
+
+    template<typename T>
+    T* tryGetComponent();
 
     template<typename T>
     T* getComponent();
@@ -119,11 +127,18 @@ namespace core
 
   // ------------------------------------ impl ------------------------------------
 
-
   template<typename T>
   T* Entity::getComponent()
   {
-    return static_cast<T*>( getComponent( T::getComponentId() ) );
+    auto* component = static_cast<T*>( tryGetComponent( T::getComponentId() ) );
+    assert( component ); // TODO: something stronger...
+    return component;
+  }
+
+  template<typename T>
+  T* Entity::tryGetComponent()
+  {
+    return static_cast<T*>( tryGetComponent( T::getComponentId() ) );
   }
 
   template<typename T>
@@ -136,6 +151,12 @@ namespace core
   T* Component::getComponent()
   {
     return getEntity()->getComponent<T>();
+  }
+
+  template<typename T>
+  T* Component::tryGetComponent()
+  {
+    return getEntity()->tryGetComponent<T>();
   }
 
   template<typename T>

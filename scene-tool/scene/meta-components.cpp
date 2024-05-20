@@ -1,82 +1,70 @@
 #include "scene/meta-components.hpp"
 #include "scene/meta.hpp"
+#include "render-chunk/texture.hpp"
 #include "game/components/components.hpp"
 
 using namespace intermediate;
 using namespace intermediate::meta;
 
 
-core::data::ShComponent TransformComponent::build( Entity& entity ) const
+namespace
 {
-  mFailIf( !entity.objectInfo );
-  auto& obj = *entity.objectInfo;
-
-  auto props = core::logic::TransformComponentProps{
-      .position = obj.transform.position,
-      .rotation = obj.transform.rotation,
-      .scale    = obj.transform.scale,
-  };
-  return core::data::ShComponent{
-      .type = core::logic::TransformComponent::getComponentId(),
-      .data = Json( props ),
-  };
-}
-
-
-core::data::ShComponent RenderMeshComponent::build( Entity& entity ) const
-{
-  mFailIf( !entity.objectInfo );
-  auto& obj = *entity.objectInfo;
-
-  // TODO: this is common logic with render-chunk/image.cpp
-  auto diffuseTexturePath = stdfs::path( obj.mesh->material_info.diffuse.path )
-                                .lexically_normal()
-                                .replace_extension( "" )
-                                .generic_string();
-  auto props = core::logic::RenderMeshComponentProps{
-      .meshId           = entity.getId(),
-      .textureDiffuseId = StringId( diffuseTexturePath ),
-  };
-  return core::data::ShComponent{
-      .type = core::logic::RenderMeshComponent::getComponentId(),
-      .data = Json( props ),
-  };
-}
-
-
-core::data::ShComponent FreeFlyCameraComponent::build( Entity& entity ) const
-{
-  // default props
-  auto props = game::FreeFlyCameraComponentProps{
-      .position = Vec3( 0 ),
-      .right    = core::math::gGlobalRight,
-      .forward  = core::math::gGlobalForward,
-  };
-
-  if( entity.objectInfo )
+  template<typename TComponent>
+  core::data::ShComponent fromProps( typename TComponent::Props props = {} )
   {
-    mFailIf( entity.objectInfo->type != "CAMERA" );
-    auto matrix    = glm::toMat3( entity.objectInfo->transform.rotation );
-    props.position = entity.objectInfo->transform.position;
-    props.right    = Vec3( matrix[0] );  //  x direction is right
-    props.forward  = -Vec3( matrix[2] ); // -z direction is forward
+    return core::data::ShComponent{
+        .type = TComponent::getComponentId(),
+        .data = Json( props ),
+    };
   }
+} // namespace
 
-  return core::data::ShComponent{
-      .type = game::FreeFlyCameraComponent::getComponentId(),
-      .data = Json( props ),
-  };
+
+core::data::ShComponent automatic::transform( Entity& entity )
+{
+  return fromProps<core::logic::TransformComponent>( {
+      .position = entity.objectInfo->transform.position,
+      .rotation = entity.objectInfo->transform.rotation,
+      .scale    = entity.objectInfo->transform.scale,
+  } );
 }
 
+core::data::ShComponent automatic::material( Entity& entity )
+{
+  auto& material = entity.objectInfo->mesh->material_info;
+  return fromProps<core::logic::MaterialComponent>( {
+      .textureDiffuseId = textureHash( material.diffuse ),
+      .blendMode        = parseBlendMode( material.blend_mode ),
+  } );
+}
 
-core::data::ShComponent ScenePortalComponent::build( Entity& entity ) const
+core::data::ShComponent automatic::renderMesh( Entity& entity )
+{
+  return fromProps<core::logic::RenderMeshComponent>( {
+      .meshId = entity.getId(),
+  } );
+}
+
+core::data::ShComponent automatic::pointLight( Entity& entity )
 {
   ( void ) entity;
-  auto props = game::ScenePortalComponentProps{
-      .toSceneId = toSceneId.getHash(),
-  };
-  return core::data::ShComponent{
-      .type = game::ScenePortalComponent::getComponentId(),
-      .data = Json( props ),
-  };
+  // TODO: point light is not present in serialized data from blender
+  return fromProps<core::logic::PointLightComponent>( {
+      .color     = core::math::decodeColorHex( 0xE7'8C'FF ),
+      .intensity = 40,
+  } );
+}
+
+core::data::ShComponent automatic::freeFlyCamera( Entity& entity )
+{
+  mFailIf( entity.objectInfo->type != "CAMERA" );
+
+  auto matrix  = glm::toMat3( entity.objectInfo->transform.rotation );
+  auto right   = Vec3( matrix[0] );  //  x direction is right
+  auto forward = -Vec3( matrix[2] ); // -z direction is forward
+
+  return fromProps<game::FreeFlyCameraComponent>( {
+      .right   = right,
+      .forward = forward,
+  } );
 }

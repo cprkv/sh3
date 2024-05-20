@@ -3,25 +3,24 @@
 
 namespace game
 {
-  struct FreeFlyCameraComponentProps
-  {
-    Vec3 position;
-    Vec3 right;
-    Vec3 forward;
-
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE( FreeFlyCameraComponentProps, position, right, forward );
-  };
-
   // TODO: this camera not is not bound to scene. may be make active .. inactive?
   class FreeFlyCameraComponent : public core::Component
   {
-    core::math::SphereStraightRotation rotation_;
-    Vec3                               position_ = { 0, 0, 0 };
-
   public:
-    mCoreComponent( FreeFlyCameraComponent, FreeFlyCameraComponentProps );
+    struct Props
+    {
+      Vec3 right;
+      Vec3 forward;
 
-    void deserialize( FreeFlyCameraComponentProps props );
+      NLOHMANN_DEFINE_TYPE_INTRUSIVE( Props, right, forward );
+    };
+
+    mCoreComponent( FreeFlyCameraComponent );
+
+    core::math::SphereStraightRotation rotation;
+    core::logic::TransformComponent*   transform = nullptr;
+
+    void init() override;
     void update( const core::system::DeltaTime& dt ) override;
   };
 
@@ -34,29 +33,26 @@ namespace game
       friend void from_json( const Json&, Props& ) {}
     };
 
-    mCoreComponent( RemoveSceneComponent, Props );
+    mCoreComponent( RemoveSceneComponent );
 
-    void deserialize( Props ) {}
     void update( const core::system::DeltaTime& ) override;
   };
 
 
-  struct ScenePortalComponentProps
-  {
-    StringHash toSceneId;
-
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE( ScenePortalComponentProps, toSceneId );
-  };
-
   class ScenePortalComponent : public core::Component
   {
-    core::math::BoundingBox bb_;
-    StringId                toSceneId_;
-
   public:
-    mCoreComponent( ScenePortalComponent, ScenePortalComponentProps );
+    struct Props
+    {
+      StringHash toSceneId;
 
-    void deserialize( ScenePortalComponentProps props );
+      NLOHMANN_DEFINE_TYPE_INTRUSIVE( Props, toSceneId );
+    };
+
+    mCoreComponent( ScenePortalComponent );
+
+    core::math::BoundingBox bb;
+
     void init() override;
     void update( const core::system::DeltaTime& dt ) override;
   };

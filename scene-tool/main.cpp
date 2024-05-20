@@ -1,7 +1,8 @@
 #include "core/core.hpp"
 #include "scene-tool.hpp"
 #include "schema.hpp"
-#include "render-chunk/render-chunk.hpp"
+#include "render-chunk/texture.hpp"
+#include "render-chunk/mesh.hpp"
 #include "scene/process-scene.hpp"
 
 
@@ -47,14 +48,38 @@ namespace
     auto scenesInfo = readSceneInput( path );
     printf( "mesh tool parsed input file...\n" );
 
+    auto textures = intermediate::makeTextureCollection();
+
+    for( const auto& sceneInfo: scenesInfo.scenes )
+      for( const auto& obj: sceneInfo.objects )
+        if( obj.mesh )
+          textures->addTexture( obj.mesh->material_info.diffuse,
+                                obj.mesh->material_info.blend_mode );
+
+    textures->process();
+
     for( const auto& sceneInfo: scenesInfo.scenes )
     {
-      auto chunk = intermediate::processRenderChunk( sceneInfo );
-      writeRenderChunk( sceneInfo, chunk );
+      // handle render chunk
+      {
+        auto chunk = core::data::schema::Chunk();
+        for( const auto& object: sceneInfo.objects )
+        {
+          if( !object.mesh.has_value() )
+            continue;
+          auto& mesh = object.mesh.value();
+          intermediate::processMesh( object.name, mesh, chunk );
+        }
+        textures->resolve( sceneInfo, chunk );
+        writeRenderChunk( sceneInfo, chunk );
+      }
 
-      auto scene          = intermediate::processScene( sceneInfo );
-      scene.render_chunks = { StringId( sceneInfo.name + ".chunk" ) };
-      writeScene( sceneInfo, scene );
+      // handle scene
+      {
+        auto scene          = intermediate::processScene( sceneInfo );
+        scene.render_chunks = { StringId( sceneInfo.name + ".chunk" ) };
+        writeScene( sceneInfo, scene );
+      }
     }
   }
 } // namespace

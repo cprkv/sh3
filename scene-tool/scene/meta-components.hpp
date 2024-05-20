@@ -4,35 +4,11 @@
 #include "scene/meta.hpp"
 #include "game/components/components.hpp"
 
-namespace intermediate::meta
+namespace intermediate::meta::automatic
 {
-  struct TransformComponent : public IComponent
-  {
-    static constexpr StringId id = core::logic::TransformComponent::getComponentId();
-    core::data::ShComponent   build( Entity& entity ) const override;
-  };
-
-  struct RenderMeshComponent : public IComponent
-  {
-    static constexpr StringId id = core::logic::RenderMeshComponent::getComponentId();
-    core::data::ShComponent   build( Entity& entity ) const override;
-  };
-
-  struct FreeFlyCameraComponent : public IComponent
-  {
-    static constexpr StringId id = game::FreeFlyCameraComponent::getComponentId();
-    core::data::ShComponent   build( Entity& entity ) const override;
-  };
-
-  struct ScenePortalComponent : public IComponent
-  {
-    StringId toSceneId;
-
-    static constexpr StringId id = game::ScenePortalComponent::getComponentId();
-
-    ScenePortalComponent( StringId toSceneId )
-        : toSceneId( toSceneId )
-    {}
-    core::data::ShComponent build( Entity& entity ) const override;
-  };
-} // namespace intermediate::meta
+  core::data::ShComponent transform( Entity& entity );
+  core::data::ShComponent material( Entity& entity );
+  core::data::ShComponent renderMesh( Entity& entity );
+  core::data::ShComponent pointLight( Entity& entity );
+  core::data::ShComponent freeFlyCamera( Entity& entity );
+} // namespace intermediate::meta::automatic

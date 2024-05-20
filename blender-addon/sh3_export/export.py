@@ -103,32 +103,32 @@ def _get_material_info(mat) -> MtMaterialInfo | None:
                                   ('BSDF_PRINCIPLED', 'Base Color')])
 
   if color_node is None:
-    print(f"warn: {mat.name} color node not found")
     print_graph(output, depth=2)
+    raise Exception(f"warn: {mat.name} color node not found")
     return None
 
   if color_node.type != "TEX_IMAGE":
-    print(f"warn: {mat.name} has color node but is not tex image!")
     print_graph(output, depth=2)
+    raise Exception(f"warn: {mat.name} has color node but is not tex image!")
     return None
 
   size: List = [color_node.image.size[0], color_node.image.size[1]]
   path: str = _get_path_info(color_node.image.filepath).relative
   diffuse: MtTextureInfo = {'path': path, 'size': size}
 
-  diffuse_usage: str | None = None
+  blend_mode: str | None = None
   if mat.blend_method == 'OPAQUE':
-    diffuse_usage = MT_DIFFUSE_USAGE_OPAQUE
+    blend_mode = MT_BLEND_MODE_OPAQUE
   elif mat.blend_method == 'HASHED' or mat.blend_method == 'CLIP':
-    diffuse_usage = MT_DIFFUSE_USAGE_PERFORATING
+    blend_mode = MT_BLEND_MODE_ALPHA_HASH
   elif mat.blend_method == 'BLEND':
-    diffuse_usage = MT_DIFFUSE_USAGE_TRANSPARENT
-  if diffuse_usage is None:
-    print(f"warn: {mat.name} has no blend method! ({mat.blend_method})")
+    blend_mode = MT_BLEND_MODE_ALPHA_BLEND
+  else:
+    raise Exception(f"warn: {mat.name} has no blend method! ({mat.blend_method})")
 
   material_info: MtMaterialInfo = {'name': mat.name,
                                    'diffuse': diffuse,
-                                   'diffuse_usage': diffuse_usage}
+                                   'blend_mode': blend_mode}
   return material_info
 
 

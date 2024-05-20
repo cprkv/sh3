@@ -132,6 +132,44 @@ using Quat = glm::fquat;
 
 using Json = nlohmann::json;
 
+
+#define mCoreEnumExpandMembers( EnumClass, MemberName ) EnumClass##_##MemberName,
+
+#define mCoreEnumExpandToString( EnumClass, MemberName ) \
+  case EnumClass##_##MemberName:                         \
+    return #MemberName;
+
+#define mCoreEnumExpandFromString( EnumClass, MemberName ) \
+  if( str == #MemberName )                                 \
+  {                                                        \
+    v = EnumClass##_##MemberName;                          \
+    return true;                                           \
+  }
+
+#define mCoreDeclareEnum( EnumClass, xEnum )                   \
+  enum EnumClass                                               \
+  {                                                            \
+    xEnum( mCoreEnumExpandMembers )                            \
+  };                                                           \
+                                                               \
+  inline const char* toString( EnumClass v )                   \
+  {                                                            \
+    switch( v )                                                \
+    {                                                          \
+      xEnum( mCoreEnumExpandToString )                         \
+    }                                                          \
+  }                                                            \
+                                                               \
+  inline bool fromString( std::string_view str, EnumClass& v ) \
+  {                                                            \
+    xEnum( mCoreEnumExpandFromString ) return false;           \
+  }                                                            \
+  inline bool fromString( const char* str, EnumClass& v )      \
+  {                                                            \
+    return fromString( std::string_view( str ), v );           \
+  }
+
+
 enum Status
 {
   StatusOk,

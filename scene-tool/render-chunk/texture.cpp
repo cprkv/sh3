@@ -1,4 +1,4 @@
-#include "render-chunk/image.hpp"
+#include "render-chunk/texture.hpp"
 #include "scene-tool.hpp"
 #include "util/detect-changes.hpp"
 #include "core/core.hpp"
@@ -11,53 +11,17 @@ namespace dx = DirectX;
 
 namespace
 {
-  enum class ImageUsage
-  {
-    AlbedoOpaque,
-    AlbedoPerforating,
-    AlbedoTransparent,
-    Normal,
-    Roughness,
-  };
-
-  const char* toString( ImageUsage u )
-  {
-    switch( u )
-    {
-      case ImageUsage::AlbedoOpaque:
-        return "AlbedoOpaque";
-      case ImageUsage::AlbedoPerforating:
-        return "AlbedoPerforating";
-      case ImageUsage::AlbedoTransparent:
-        return "AlbedoTransparent";
-      case ImageUsage::Normal:
-        return "Normal";
-      case ImageUsage::Roughness:
-        return "Roughness";
-    }
-  }
-
-
   // all intermediate data stored here
   struct TmpTexture
   {
     TextureInfo                 info;
-    ImageUsage                  usage;
+    core::render::BlendMode     blendMode;
     std::string                 intermediatePath;
     core::data::schema::Texture result;
   };
 
-  u64 textureHash( const TextureInfo& textureInfo )
-  {
-    auto path = stdfs::path( textureInfo.path ).lexically_normal().replace_extension( "" ).generic_string();
-    //printf( "texture path: %s\n", path.c_str() );
-    return StringId( path );
-  }
-
-  bool textureEq( const TextureInfo& a, const TextureInfo& b )
-  {
-    return a.path == b.path;
-  }
+  bool operator==( const TextureInfo& a, const TextureInfo& b ) { return a.path == b.path; }
+  bool operator!=( const TextureInfo& a, const TextureInfo& b ) { return !operator==( a, b ); }
 
 
   std::string getTextureIntermediateOutputPath( const TextureInfo& texture )
@@ -76,13 +40,15 @@ namespace
     mFailIf( !stdfs::exists( fullPath ) );
     mFailIf( !stdfs::is_regular_file( fullPath ) );
 
+    printf( "texture (%s):\n  %s ->\n  %s\n", core::render::toString( texture.blendMode ),
+            fullPath.string().c_str(),
+            texture.intermediatePath.c_str() );
+
     auto changes = FileChanges( fullPath, texture.intermediatePath );
     if( !changes.isChanged() )
       return;
 
-    printf( "converting texture (%s):\n  %s ->\n  %s\n", toString( texture.usage ),
-            fullPath.string().c_str(),
-            texture.intermediatePath.c_str() );
+    printf( "has changes, converting...\n" );
 
     nvtt::Surface image;
     mFailIf( !image.load( fullPath.string().c_str() ) );
@@ -91,34 +57,34 @@ namespace
     auto       context            = nvtt::Context{ enableCuda };
     auto       compressionOptions = nvtt::CompressionOptions{};
 
-    if( texture.usage == ImageUsage::AlbedoOpaque )
+    if( texture.blendMode == core::render::BlendMode_Opaque )
     {
       compressionOptions.setFormat( nvtt::Format_DXT1 );
       compressionOptions.setQuality( nvtt::Quality_Production );
     }
-    else if( texture.usage == ImageUsage::AlbedoPerforating )
+    else if( texture.blendMode == core::render::BlendMode_AlphaHash )
     {
       compressionOptions.setFormat( nvtt::Format_DXT1a );
       compressionOptions.setQuality( nvtt::Quality_Production );
     }
-    else if( texture.usage == ImageUsage::AlbedoTransparent )
+    else if( texture.blendMode == core::render::BlendMode_AlphaBlend )
     {
       compressionOptions.setFormat( nvtt::Format_DXT3 );
       compressionOptions.setQuality( nvtt::Quality_Production );
     }
-    else if( texture.usage == ImageUsage::Normal )
-    {
-      image.setNormalMap( true );
-      compressionOptions.setFormat( nvtt::Format_BC7 ); // ???
-      compressionOptions.setPixelFormat( 7, 7, 7, 0 );
-      compressionOptions.setQuality( nvtt::Quality_Normal );
-    }
-    else if( texture.usage == ImageUsage::Roughness )
-    {
-      // TODO: this is just random stuff for fulfill emptiness, need to fix to correct format, like 2 channel image...
-      compressionOptions.setFormat( nvtt::Format_BC1 );
-      compressionOptions.setQuality( nvtt::Quality_Production );
-    }
+    //else if( texture.blendMode == core::render::BlendMode_Normal )
+    //{
+    //  image.setNormalMap( true );
+    //  compressionOptions.setFormat( nvtt::Format_BC7 ); // ???
+    //  compressionOptions.setPixelFormat( 7, 7, 7, 0 );
+    //  compressionOptions.setQuality( nvtt::Quality_Normal );
+    //}
+    //else if( texture.blendMode == core::render::BlendMode_Roughness )
+    //{
+    //  // TODO: this is just random stuff for fulfill emptiness, need to fix to correct format, like 2 channel image...
+    //  compressionOptions.setFormat( nvtt::Format_BC1 );
+    //  compressionOptions.setQuality( nvtt::Quality_Production );
+    //}
     else
     {
       printf( "unknown usage attribute\n" );
@@ -171,30 +137,12 @@ namespace
   }
 
 
-  ImageUsage convertImageUsage( const std::string& diffuseUsage )
+  core::render::BlendMode chooseMoreAdvancedBlendMode( core::render::BlendMode a, core::render::BlendMode b )
   {
-    ImageUsage usage = ImageUsage::AlbedoOpaque;
-
-    if( diffuseUsage == SH_DIFFUSE_USAGE_OPAQUE )
-      usage = ImageUsage::AlbedoOpaque;
-    else if( diffuseUsage == SH_DIFFUSE_USAGE_PERFORATING )
-      usage = ImageUsage::AlbedoPerforating;
-    else if( diffuseUsage == SH_DIFFUSE_USAGE_TRANSPARENT )
-      usage = ImageUsage::AlbedoTransparent;
-    else
-    {
-      printf( "unknown diffuse usage: %s\n", diffuseUsage.c_str() );
-      abort();
-    }
-
-    return usage;
-  }
-
-
-  ImageUsage chooseImageUsage( ImageUsage a, ImageUsage b )
-  {
-    using U = std::underlying_type_t<ImageUsage>;
-    return static_cast<ImageUsage>( std::max( static_cast<U>( a ), static_cast<U>( b ) ) );
+    using U = std::underlying_type_t<core::render::BlendMode>;
+    return static_cast<core::render::BlendMode>(
+        std::max( static_cast<U>( a ),
+                  static_cast<U>( b ) ) );
   }
 
 
@@ -259,82 +207,85 @@ namespace
 } // namespace
 
 
-void intermediate::processMaterials( const SceneInfo&           sceneInfo,
-                                     core::data::schema::Chunk& outputChunk )
+struct TextureCollection : public ITextureCollection
 {
-  std::map<u64, TmpTexture> textures;
+  std::map<u64, TmpTexture> textures_;
 
-  // 0. make unique texture map
-  for( const auto& object: sceneInfo.objects )
+  ~TextureCollection() override = default;
+
+
+  void addTexture( const TextureInfo& textureInfo, const std::string& blendModeStr ) override
   {
-    if( !object.mesh.has_value() )
-      continue;
+    u64 hash = textureHash( textureInfo );
 
-    auto& mesh = object.mesh.value();
-    u64   hash = textureHash( mesh.material_info.diffuse );
-
-    if( auto it = textures.find( hash ); it != textures.end() )
+    if( auto it = textures_.find( hash ); it != textures_.end() )
     {
-      if( !textureEq( it->second.info, mesh.material_info.diffuse ) )
+      if( it->second.info != textureInfo )
       {
         printf( "ERROR: different textures has same texture ids\n" );
         abort();
       }
 
-      auto usage       = convertImageUsage( mesh.material_info.diffuse_usage );
-      it->second.usage = chooseImageUsage( it->second.usage, usage );
+      auto blendMode       = parseBlendMode( blendModeStr );
+      it->second.blendMode = chooseMoreAdvancedBlendMode( it->second.blendMode, blendMode );
+      return;
     }
-    else
+
+    auto intermediatePath = getTextureIntermediateOutputPath( textureInfo );
+    auto blendMode        = parseBlendMode( blendModeStr );
+
+    auto tmpTexture = TmpTexture{
+        .info             = textureInfo,
+        .blendMode        = blendMode,
+        .intermediatePath = std::move( intermediatePath ),
+        .result           = { .id = hash },
+    };
+    textures_.emplace( hash, std::move( tmpTexture ) );
+  }
+
+
+  void process() override
+  {
+    // 1. convert textures (nvtt)
+    for( auto& [_, texture]: textures_ )
     {
-      auto intermediatePath = getTextureIntermediateOutputPath( mesh.material_info.diffuse );
-      auto usage            = convertImageUsage( mesh.material_info.diffuse_usage );
-
-      auto tmpTexture = TmpTexture{
-          .info             = mesh.material_info.diffuse,
-          .usage            = usage,
-          .intermediatePath = std::move( intermediatePath ),
-          .result           = { .id = hash },
-      };
-      textures.emplace( hash, std::move( tmpTexture ) );
+      // TODO: pass usage (check material settings)
+      convertToDds( texture );
     }
-  }
 
-  // 1. convert textures (nvtt)
-  for( auto& [_, texture]: textures )
-  {
-    // TODO: pass usage (check material settings)
-    convertToDds( texture );
-  }
-
-  // 2. load all textures in memory (DirectXTexSimpl)
-  for( auto& [_, texture]: textures )
-  {
-    loadTexture( texture );
-  }
-
-  // 3. write textures and materials to outputChunk
-  for( auto& [_, texture]: textures )
-  {
-    outputChunk.textures.push_back( texture.result );
-  }
-
-  for( const auto& object: sceneInfo.objects )
-  {
-    if( !object.mesh.has_value() )
-      continue;
-
-    auto& mesh       = object.mesh.value();
-    u64   materialId = StringId( mesh.material_info.name );
-    auto  materialIt = std::find_if(
-        outputChunk.materials.begin(), outputChunk.materials.end(),
-        [=]( const core::data::schema::Material& m ) { return m.id == materialId; } );
-
-    if( materialIt == outputChunk.materials.end() )
+    // 2. load all textures in memory (DirectXTexSimpl)
+    for( auto& [_, texture]: textures_ )
     {
-      outputChunk.materials.emplace_back( core::data::schema::Material{
-          .id               = materialId,
-          .diffuseTextureId = textureHash( mesh.material_info.diffuse ),
-      } );
+      loadTexture( texture );
     }
   }
+
+
+  void resolve( const SceneInfo& sceneInfo, core::data::schema::Chunk& outputChunk ) override
+  {
+    auto materials = sceneInfo.objects |
+                     std::ranges::views::filter( []( const ObjectInfo& o ) { return o.mesh.has_value(); } ) |
+                     std::ranges::views::transform( []( const ObjectInfo& o ) { return o.mesh->material_info; } ) |
+                     std::ranges::to<std::vector>();
+
+    auto eraseMaterials = std::ranges::unique(
+        materials, []( const MaterialInfo& a, const MaterialInfo& b ) { return a.name == b.name; } );
+    materials.erase( eraseMaterials.begin(), eraseMaterials.end() );
+
+    auto diffuseTextures = materials |
+                           std::ranges::views::transform( []( const MaterialInfo& m ) { return textureHash( m.diffuse ); } ) |
+                           std::ranges::to<std::set>();
+
+    for( auto textureId: diffuseTextures )
+    {
+      printf( "add image to render chunk: " mFmtU64 "\n", textureId );
+      outputChunk.textures.push_back( textures_.at( textureId ).result );
+    }
+  }
+};
+
+
+std::unique_ptr<ITextureCollection> intermediate::makeTextureCollection()
+{
+  return std::make_unique<TextureCollection>();
 }

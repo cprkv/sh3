@@ -28,9 +28,8 @@ namespace core::data
 
     std::list<std::move_only_function<void( Status )>> loadCallbacks;
 
-    RenderChunkPart<core::render::Material> materials;
-    RenderChunkPart<core::render::Mesh>     meshes;
-    RenderChunkPart<core::render::Texture>  textures;
+    RenderChunkPart<core::render::Mesh>    meshes;
+    RenderChunkPart<core::render::Texture> textures;
   };
 } // namespace core::data
 
@@ -93,14 +92,24 @@ namespace
     return system::task::ctiDeffered( [mesh = std::move( mesh ), data]() mutable -> std::expected<None, Status> {
       auto uploadMesh = core::render::Mesh();
 
-      if( auto s = uploadMesh.indexBuffer.init( makeArrayBytesView( mesh.indexBuffer ) );
+#ifdef _DEBUG
+      char ibName[128] = { 0 };
+      char vbName[128] = { 0 };
+      sprintf( ibName, "ib-" mFmtStringHash, mesh.id );
+      sprintf( vbName, "ib-" mFmtStringHash, mesh.id );
+#else
+      const char* vbName = "";
+      const char* vbName = "";
+#endif
+
+      if( auto s = uploadMesh.indexBuffer.init( ibName, makeArrayBytesView( mesh.indexBuffer ) );
           s != StatusOk )
       {
         mCoreLogError( "error uploading index buffer\n" );
         return std::unexpected( s );
       }
 
-      if( auto s = uploadMesh.vertexBuffer.init( makeArrayBytesView( mesh.vertexBuffer ) );
+      if( auto s = uploadMesh.vertexBuffer.init( vbName, makeArrayBytesView( mesh.vertexBuffer ) );
           s != StatusOk )
       {
         mCoreLogError( "error uploading vertex buffer\n" );
@@ -239,13 +248,6 @@ bool RenderChunk::isLoaded() const
   if( !data_ || ref_.empty() )
     return false;
   return !data_->loading;
-}
-
-core::render::Material* RenderChunk::getMaterial( StringId id )
-{
-  if( !isLoaded() )
-    return nullptr;
-  return data_->materials.get( id );
 }
 
 core::render::Mesh* RenderChunk::getMesh( StringId id )

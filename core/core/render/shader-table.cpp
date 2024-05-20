@@ -51,7 +51,8 @@ Status ShaderTable::reload()
                                             L{ .name = "UVCoord", .format = gapi::GPUFormatRG32F } ) );
 
   mCoreCheckStatus( makePipelineFromSource( st.line, directory, mShaderPair( line ),
-                                            L{ .name = "LinePosition", .format = gapi::GPUFormatRGB32F } ) );
+                                            L{ .name = "Position", .format = gapi::GPUFormatRGB32F },
+                                            L{ .name = "Color", .format = gapi::GPUFormatRGB32F } ) );
 
   *this = st;
   return StatusOk;

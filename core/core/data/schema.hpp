@@ -3,6 +3,8 @@
 
 namespace core::data::schema
 {
+  // TODO: intrusive Vec serialization as in scene-tool
+
   struct Vec2i
   {
     int x;
@@ -58,14 +60,6 @@ namespace core::data::schema
     MSGPACK_DEFINE( id, vertexBuffer, indexBuffer );
   };
 
-  struct Material
-  {
-    u64 id;
-    u64 diffuseTextureId;
-
-    MSGPACK_DEFINE( id, diffuseTextureId );
-  };
-
   struct TextureData
   {
     u32               memPitch;
@@ -96,10 +90,9 @@ namespace core::data::schema
 
   struct Chunk
   {
-    std::vector<Mesh>     meshes;
-    std::vector<Material> materials;
-    std::vector<Texture>  textures;
+    std::vector<Mesh>    meshes;
+    std::vector<Texture> textures;
 
-    MSGPACK_DEFINE( meshes, materials, textures );
+    MSGPACK_DEFINE( meshes, textures );
   };
-} // namespace data::schema
+} // namespace core::data::schema
