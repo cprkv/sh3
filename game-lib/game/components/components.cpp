@@ -79,7 +79,12 @@ void FreeFlyCameraComponent::update( const core::system::DeltaTime& )
       else if( !isKeyPressed( KeyW ) && isKeyPressed( KeyS ) )
         deltaForward = -1;
 
-      f32 moveFactor = core::loopGetDeltaTime().getMsF() * 0.01f;
+      f32 moveFactorPerMs = 0.002f;
+
+      if( isKeyMod( KeyModShift ) )
+        moveFactorPerMs *= 4;
+
+      f32 moveFactor = core::loopGetDeltaTime().getMsF() * moveFactorPerMs;
       transform->props.position += deltaForward * moveFactor * rotation.getForward();
 
       // TODO: this is messed up: KeyA should add positive to deltaRight but it moves left...
