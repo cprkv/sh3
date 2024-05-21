@@ -96,9 +96,20 @@ void logic::destroy()
 
 void logic::update()
 {
+  bool hasActiveScene = false;
+
   for( auto& sceneInfo: sData->scenes )
   {
-    sceneInfo.scene.update( loopGetDeltaTime() );
+    if( !sceneInfo.isLoading )
+    {
+      sceneInfo.scene.update( loopGetDeltaTime() );
+      hasActiveScene = true;
+    }
+  }
+
+  if( !hasActiveScene )
+  {
+    render::getRenderList().loadingScreen = true;
   }
 }
 

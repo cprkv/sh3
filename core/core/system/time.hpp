@@ -14,8 +14,10 @@ namespace core::system
 
     void reset();
 
-    u64 getMs(); // milliseconds
-    u64 getUs(); // microseconds
+    u64 getMs();   // milliseconds
+    f32 getMsF();  // milliseconds
+    u64 getUs();   // microseconds
+    f32 getSecF(); // seconds
   };
 
 

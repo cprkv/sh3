@@ -18,6 +18,8 @@ namespace core::render
   class RenderList
   {
   public:
+    bool loadingScreen = false;
+
     struct Drawable
     {
       Mesh*     mesh;
@@ -55,6 +57,7 @@ namespace core::render
       drawables.clear();
       lines.clear();
       lights.clear();
+      loadingScreen = false;
     }
   };
 
@@ -67,6 +70,7 @@ namespace core::render
     gapi::DepthStencilState depthStencilStateDisabled;
 
     gapi::ConstantBufferData<shaders::Texture2DVSConstantBuffer>    texture2DVSConstant;
+    gapi::ConstantBufferData<shaders::LoadingConstantBuffer>        loadingConstant;
     gapi::ConstantBufferData<shaders::OldFullPSConstantBuffer>      oldFullPSConstant;
     gapi::ConstantBufferData<shaders::OldFullVSConstantBuffer>      oldFullVSConstant;
     gapi::ConstantBufferData<shaders::OldFullVSConstantBufferModel> oldFullVSConstantModel;

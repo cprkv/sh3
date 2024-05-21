@@ -14,10 +14,20 @@ u64 Stopwatch::getMs()
   return static_cast<u64>( std::chrono::duration_cast<std::chrono::milliseconds>( timeDiff ).count() );
 }
 
+f32 Stopwatch::getMsF()
+{
+  return static_cast<f32>( getUs() ) / 1000.f;
+}
+
 u64 Stopwatch::getUs()
 {
   auto timeDiff = Clock::now() - begin_;
   return static_cast<u64>( std::chrono::duration_cast<std::chrono::microseconds>( timeDiff ).count() );
+}
+
+f32 Stopwatch::getSecF()
+{
+  return static_cast<f32>( getMs() ) / 1000.f;
 }
 
 

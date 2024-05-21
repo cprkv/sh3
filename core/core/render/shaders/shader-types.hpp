@@ -34,15 +34,41 @@ namespace core::render::shaders {
     #endif
 
       
+  #ifndef GUARD_LineVSConstantBuffer
+  #define GUARD_LineVSConstantBuffer
   struct LineVSConstantBuffer {
     float4x4 gWorldToProjection;
   };
+  #endif
   
+  #ifndef GUARD_LoadingConstantBuffer
+  #define GUARD_LoadingConstantBuffer
+  struct LoadingConstantBuffer {
+    float2 iResolution;
+    float _pad_1;
+    float iTime;
+  };
+  #endif
+  
+  #ifndef GUARD_LoadingConstantBuffer
+  #define GUARD_LoadingConstantBuffer
+  struct LoadingConstantBuffer {
+    float2 iResolution;
+    float _pad_1;
+    float iTime;
+  };
+  #endif
+  
+  #ifndef GUARD_OldFullPSConstantBuffer
+  #define GUARD_OldFullPSConstantBuffer
   struct OldFullPSConstantBuffer {
     dword gAlphaHash;
     float3 _pad_1;
   };
+  #endif
   
+  #ifndef GUARD_OldPointLight
+  #define GUARD_OldPointLight
   struct OldPointLight {
     float3 position;
     float _pad_1;
@@ -51,13 +77,19 @@ namespace core::render::shaders {
     float intensity;
     float3 _pad_3;
   };
+  #endif
   
+  #ifndef GUARD_OldSceneLights
+  #define GUARD_OldSceneLights
   struct OldSceneLights {
     OldPointLight lights[32];
     dword count;
     float3 ambient;
   };
+  #endif
   
+  #ifndef GUARD_OldFullVSConstantBuffer
+  #define GUARD_OldFullVSConstantBuffer
   struct OldFullVSConstantBuffer {
     OldSceneLights gSceneLights;
     float3 gViewPos;
@@ -65,19 +97,26 @@ namespace core::render::shaders {
     float4x4 gViewToProjection;
     float4x4 gWorldToView;
   };
+  #endif
   
+  #ifndef GUARD_OldFullVSConstantBufferModel
+  #define GUARD_OldFullVSConstantBufferModel
   struct OldFullVSConstantBufferModel {
     float4x4 gModelToWorld;
     float4x4 gWorldInvTranspose;
   };
+  #endif
   
   
+  #ifndef GUARD_Texture2DVSConstantBuffer
+  #define GUARD_Texture2DVSConstantBuffer
   struct Texture2DVSConstantBuffer {
     float2 gPosition;
     float2 gSize;
     float2 gScreenSize;
     float2 _pad_1;
   };
+  #endif
   
   
     #pragma pack(pop)

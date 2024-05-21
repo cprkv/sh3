@@ -16,6 +16,7 @@ namespace core::render
     std::string    directory;
     ShaderPipeline texture2D;
     ShaderPipeline texture2DMS;
+    ShaderPipeline loading;
     ShaderPipeline oldFull;
     ShaderPipeline line;
 

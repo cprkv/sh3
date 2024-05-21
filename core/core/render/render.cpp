@@ -74,6 +74,7 @@ Status core::render::initialize( HWND windowHandle )
     mCoreCheckStatus( gCommonRenderData->depthStencilStateDisabled.init( false ) );
 
     mCoreCheckStatus( gCommonRenderData->texture2DVSConstant.init( ConstantBufferTargetVertex ) );
+    mCoreCheckStatus( gCommonRenderData->loadingConstant.init( ConstantBufferTargetAll ) );
     mCoreCheckStatus( gCommonRenderData->oldFullPSConstant.init( ConstantBufferTargetPixel ) );
     mCoreCheckStatus( gCommonRenderData->oldFullVSConstant.init( ConstantBufferTargetVertex ) );
     mCoreCheckStatus( gCommonRenderData->oldFullVSConstantModel.init( ConstantBufferTargetVertex ) );

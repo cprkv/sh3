@@ -45,6 +45,10 @@ Status ShaderTable::reload()
                                             L{ .name = "Position", .format = gapi::GPUFormatRG32F },
                                             L{ .name = "UV", .format = gapi::GPUFormatRG32F } ) );
 
+  mCoreCheckStatus( makePipelineFromSource( st.loading, directory, mShaderPair( loading ),
+                                            L{ .name = "Position", .format = gapi::GPUFormatRG32F },
+                                            L{ .name = "UV", .format = gapi::GPUFormatRG32F } ) );
+
   mCoreCheckStatus( makePipelineFromSource( st.oldFull, directory, mShaderPair( old_full ),
                                             L{ .name = "MyPosition", .format = gapi::GPUFormatRGB32F },
                                             L{ .name = "Normal", .format = gapi::GPUFormatRGB32F },

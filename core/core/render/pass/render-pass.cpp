@@ -65,6 +65,31 @@ void RenderPass3D::render( RenderList& renderList )
   depthStencil.clear();
   renderTarget.clear( Vec4( 0, 1, 0, 1 ) );
 
+  // loading screen
+  if( renderList.loadingScreen )
+  {
+    auto& vsConstant  = gCommonRenderData->loadingConstant;
+    vsConstant.data() = {
+        .iResolution = gDevice->viewport.fSize,
+        .iTime       = stopwatch.getSecF(),
+    };
+    if( vsConstant.update() != StatusOk ) // TODO
+      abort();
+
+    auto rpState = gapi::RenderPipelineState();
+    gapi::RenderPipeline( rpState )
+        .useTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST )
+        .useAlphaBlending()
+        .bind( gCommonRenderData->shaderTable.loading.vertexShader )
+        .bind( gCommonRenderData->shaderTable.loading.pixelShader )
+        .bind( gCommonRenderData->fullscreenQuadVertexBuffer )
+        .bind( vsConstant )
+        .bind( gCommonRenderData->depthStencilStateDisabled )
+        .addTarget( renderTarget )
+        .draw();
+  }
+
+  // 3d geometry
   {
     auto& vsConstant                 = gCommonRenderData->oldFullVSConstant;
     auto& psConstant                 = gCommonRenderData->oldFullPSConstant;
