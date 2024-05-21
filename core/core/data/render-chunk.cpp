@@ -98,7 +98,7 @@ namespace
       sprintf( ibName, "ib-" mFmtStringHash, mesh.id );
       sprintf( vbName, "ib-" mFmtStringHash, mesh.id );
 #else
-      const char* vbName = "";
+      const char* ibName = "";
       const char* vbName = "";
 #endif
 

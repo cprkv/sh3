@@ -4,6 +4,7 @@
 #include "core/render/pass/render-pass.hpp"
 #include "core/data/data.hpp"
 #include "core/math/math.hpp"
+#include "core/input/input.hpp"
 
 using namespace core;
 using namespace core::render;
@@ -66,8 +67,7 @@ Status core::render::initialize( HWND windowHandle )
   // common data
   {
     gCommonRenderData = new CommonRenderData();
-    auto shadersPath  = data::getDataPath( "shaders" );
-    mCoreCheckStatus( gCommonRenderData->shaderTable.init( std::move( shadersPath ) ) );
+    mCoreCheckStatus( gCommonRenderData->shaderTable.init( data::getDataPath( "shaders" ) ) );
 
     mCoreCheckStatus( gCommonRenderData->fullscreenQuadVertexBuffer.init( "fullscreen-quad", makeArrayBytesView( sFullscreenQuadData ) ) );
     mCoreCheckStatus( gCommonRenderData->depthStencilStateEnabled.init( true ) );
@@ -95,6 +95,21 @@ void render::destroy()
   delete sData;
   delete gCommonRenderData;
   delete gDevice;
+}
+
+
+void render::update()
+{
+#ifdef _DEBUG
+  if( input::isKeyMod( input::KeyModCtrl ) && input::isKeyDown( input::KeyR ) )
+  {
+    auto s = gCommonRenderData->shaderTable.reload();
+    if( s != StatusOk )
+      mCoreLogError( "error reload shader table: %d\n", static_cast<int>( s ) );
+    else
+      mCoreLog( "shader table reloaded!\n" );
+  }
+#endif
 }
 
 

@@ -267,7 +267,7 @@ struct TextureCollection : public ITextureCollection
   }
 
 
-  void resolve( const SceneInfo& sceneInfo, core::data::schema::Chunk& outputChunk ) override
+  void resolve( const SceneInfo& sceneInfo, core::data::schema::Chunk& outputChunk ) const override
   {
     auto materials = sceneInfo.objects |
                      std::ranges::views::filter( []( const ObjectInfo& o ) { return o.mesh.has_value(); } ) |

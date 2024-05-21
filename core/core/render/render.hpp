@@ -83,6 +83,7 @@ namespace core::render
 
   Status initialize( HWND windowHandle );
   void   destroy();
+  void   update();
 
   RenderList& getRenderList();
   void        present();

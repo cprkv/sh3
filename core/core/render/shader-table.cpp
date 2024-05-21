@@ -35,26 +35,26 @@ Status ShaderTable::init( std::string initDirectory )
 Status ShaderTable::reload()
 {
   using L = gapi::VertexShaderItemLayout;
-  ShaderTable st;
+  auto st = ShaderTable{ .directory = directory };
 
-  mCoreCheckStatus( makePipelineFromSource( st.texture2D, directory, mShaderPair( texture_2d ),
+  mCoreCheckStatus( makePipelineFromSource( st.texture2D, st.directory, mShaderPair( texture_2d ),
                                             L{ .name = "Position", .format = gapi::GPUFormatRG32F },
                                             L{ .name = "UV", .format = gapi::GPUFormatRG32F } ) );
 
-  mCoreCheckStatus( makePipelineFromSource( st.texture2DMS, directory, "texture_2d.vs.hlsl", "texture_2dms.ps.hlsl",
+  mCoreCheckStatus( makePipelineFromSource( st.texture2DMS, st.directory, "texture_2d.vs.hlsl", "texture_2dms.ps.hlsl",
                                             L{ .name = "Position", .format = gapi::GPUFormatRG32F },
                                             L{ .name = "UV", .format = gapi::GPUFormatRG32F } ) );
 
-  mCoreCheckStatus( makePipelineFromSource( st.loading, directory, mShaderPair( loading ),
+  mCoreCheckStatus( makePipelineFromSource( st.loading, st.directory, mShaderPair( loading ),
                                             L{ .name = "Position", .format = gapi::GPUFormatRG32F },
                                             L{ .name = "UV", .format = gapi::GPUFormatRG32F } ) );
 
-  mCoreCheckStatus( makePipelineFromSource( st.oldFull, directory, mShaderPair( old_full ),
+  mCoreCheckStatus( makePipelineFromSource( st.oldFull, st.directory, mShaderPair( old_full ),
                                             L{ .name = "MyPosition", .format = gapi::GPUFormatRGB32F },
                                             L{ .name = "Normal", .format = gapi::GPUFormatRGB32F },
                                             L{ .name = "UVCoord", .format = gapi::GPUFormatRG32F } ) );
 
-  mCoreCheckStatus( makePipelineFromSource( st.line, directory, mShaderPair( line ),
+  mCoreCheckStatus( makePipelineFromSource( st.line, st.directory, mShaderPair( line ),
                                             L{ .name = "Position", .format = gapi::GPUFormatRGB32F },
                                             L{ .name = "Color", .format = gapi::GPUFormatRGB32F } ) );
 

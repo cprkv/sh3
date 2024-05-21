@@ -21,7 +21,7 @@ namespace intermediate
     virtual void process()                                                                   = 0;
 
     // per scene
-    virtual void resolve( const SceneInfo& sceneInfo, core::data::schema::Chunk& outputChunk ) = 0;
+    virtual void resolve( const SceneInfo& sceneInfo, core::data::schema::Chunk& outputChunk ) const = 0;
   };
 
   std::unique_ptr<ITextureCollection> makeTextureCollection();

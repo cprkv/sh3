@@ -4,6 +4,7 @@
 #include "render-chunk/texture.hpp"
 #include "render-chunk/mesh.hpp"
 #include "scene/process-scene.hpp"
+#include <execution>
 
 
 namespace
@@ -30,7 +31,7 @@ namespace
     printf( "serializing render chunk...\n" );
     msgpack::pack( memoryWriter, renderChunk );
 
-    int compressionLevel = useCompression ? 6 : 1;
+    int compressionLevel = useCompression ? 3 : 1;
     printf( "writing render chunk %s (compression: %d)...\n", outputPath.string().c_str(), compressionLevel );
     mFailIf( core::fs::writeFileCompressed( outputPath.string(), memoryWriter.bytes, compressionLevel ) != StatusOk );
     printf( "render chunk written\n" );
@@ -63,29 +64,30 @@ namespace
 
     textures->process();
 
-    for( const auto& sceneInfo: scenesInfo.scenes )
-    {
-      // handle render chunk
-      {
-        auto chunk = core::data::schema::Chunk();
-        for( const auto& object: sceneInfo.objects )
-        {
-          if( !object.mesh.has_value() )
-            continue;
-          auto& mesh = object.mesh.value();
-          intermediate::processMesh( object.name, mesh, chunk );
-        }
-        textures->resolve( sceneInfo, chunk );
-        writeRenderChunk( sceneInfo, chunk, useCompression );
-      }
+    std::for_each(
+        std::execution::par, scenesInfo.scenes.begin(), scenesInfo.scenes.end(),
+        [&textures, useCompression]( const auto& sceneInfo ) {
+          // handle render chunk
+          {
+            auto chunk = core::data::schema::Chunk();
+            for( const auto& object: sceneInfo.objects )
+            {
+              if( !object.mesh.has_value() )
+                continue;
+              auto& mesh = object.mesh.value();
+              intermediate::processMesh( object.name, mesh, chunk );
+            }
+            textures->resolve( sceneInfo, chunk );
+            writeRenderChunk( sceneInfo, chunk, useCompression );
+          }
 
-      // handle scene
-      {
-        auto scene          = intermediate::processScene( sceneInfo );
-        scene.render_chunks = { StringId( sceneInfo.name + ".chunk" ) };
-        writeScene( sceneInfo, scene );
-      }
-    }
+          // handle scene
+          {
+            auto scene          = intermediate::processScene( sceneInfo );
+            scene.render_chunks = { StringId( sceneInfo.name + ".chunk" ) };
+            writeScene( sceneInfo, scene );
+          }
+        } );
   }
 } // namespace
 

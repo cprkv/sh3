@@ -172,6 +172,7 @@ LoopStatus core::loopStepBegin()
 
   system::task::update();
   logic::update();
+  render::update();
 
   return LoopStatusContinue;
 }
