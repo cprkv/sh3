@@ -19,3 +19,16 @@ TEST( string_id )
   ASSERT_EQUAL( hash( "X0/MR1F-MFA/mr2f-pp" ), static_cast<StringHash>( 11527482120388748660u ) );
   ASSERT_EQUAL( hash( "X0/MR1F-MFA/mr2e-pp" ), static_cast<StringHash>( 2077102600007461255u ) );
 }
+
+TEST( string_id_concatination )
+{
+  ASSERT_EQUAL( StringId( StringId( "a" ), "b" ),
+                StringId( "ab" ) );
+  ASSERT_EQUAL( StringId( StringId( "maps/mall-real/mall-real-split/mrff" ), ".scene.json" ),
+                StringId( "maps/mall-real/mall-real-split/mrff.scene.json" ) );
+
+  using namespace std::string_view_literals;
+
+  ASSERT_EQUAL( StringId( "maps/mall-real/mall-real-split/mrff" ) + ".scene.json"sv,
+                StringId( "maps/mall-real/mall-real-split/mrff.scene.json" ) );
+}

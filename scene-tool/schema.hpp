@@ -13,31 +13,44 @@ namespace intermediate
     FileWriter( const char* path );
     void write( const char* data, size_t size );
   };
+
+  struct VectorWriter
+  {
+    std::vector<byte> bytes;
+
+    void write( const char* data, size_t size )
+    {
+      bytes.append_range( std::span( reinterpret_cast<const byte*>( data ), size ) );
+    }
+  };
+
+  using MsgPackWriter = VectorWriter;
 } // namespace intermediate
 
 
 // TODO: this is core serialization actually
 
-#define mMsgPackDeclareSerializable( Type )                                                                                  \
-  namespace msgpack                                                                                                          \
-  {                                                                                                                          \
-    MSGPACK_API_VERSION_NAMESPACE( MSGPACK_DEFAULT_API_NS )                                                                  \
-    {                                                                                                                        \
-      namespace adaptor                                                                                                      \
-      {                                                                                                                      \
-        template<>                                                                                                           \
-        struct convert<Type>                                                                                                 \
-        {                                                                                                                    \
-          const msgpack::object& operator()( const msgpack::object& o, Type& v ) const;                                      \
-        };                                                                                                                   \
-                                                                                                                             \
-        template<>                                                                                                           \
-        struct pack<Type>                                                                                                    \
-        {                                                                                                                    \
-          packer<intermediate::FileWriter>& operator()( msgpack::packer<intermediate::FileWriter>& o, const Type& v ) const; \
-        };                                                                                                                   \
-      }                                                                                                                      \
-    }                                                                                                                        \
+#define mMsgPackDeclareSerializable( Type )                                             \
+  namespace msgpack                                                                     \
+  {                                                                                     \
+    MSGPACK_API_VERSION_NAMESPACE( MSGPACK_DEFAULT_API_NS )                             \
+    {                                                                                   \
+      namespace adaptor                                                                 \
+      {                                                                                 \
+        template<>                                                                      \
+        struct convert<Type>                                                            \
+        {                                                                               \
+          const msgpack::object& operator()( const msgpack::object& o, Type& v ) const; \
+        };                                                                              \
+                                                                                        \
+        template<>                                                                      \
+        struct pack<Type>                                                               \
+        {                                                                               \
+          packer<intermediate::MsgPackWriter>& operator()(                              \
+              msgpack::packer<intermediate::MsgPackWriter>& o, const Type& v ) const;   \
+        };                                                                              \
+      }                                                                                 \
+    }                                                                                   \
   }
 
 

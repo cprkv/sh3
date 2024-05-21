@@ -10,6 +10,7 @@
     <dependency name="hlsl-meta-generator" url="https://github.com/cprkv/hlsl-meta-generator.git" revision="master" />
     <dependency name="function2" url="https://github.com/Naios/function2.git" revision="4.0.0" />
     <dependency name="continuable" url="https://github.com/Naios/continuable.git" revision="4.0.0" />
+    <dependency name="zstd" url="https://github.com/cprkv/zstd.git" revision="master" />
 
     <!-- This is my private repo. It contains all game data required to run game. -->
     <!-- When project will reach alpha stage, I will publish it -->

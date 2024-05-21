@@ -23,3 +23,5 @@ target_compile_options(DirectXTex PRIVATE -Wno-unsafe-buffer-usage)
 
 add_subdirectory(${VY_ROOT}/deps/function2)
 add_subdirectory(${VY_ROOT}/deps/continuable)
+
+add_subdirectory(${VY_ROOT}/deps/zstd)

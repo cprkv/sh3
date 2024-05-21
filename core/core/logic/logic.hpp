@@ -10,8 +10,8 @@ namespace core::logic
   void   destroy();
   void   update();
 
-  void   sceneLoad( const char* name );
-  void   sceneUnload( const char* name );
+  void   sceneLoad( StringId sceneId );
+  void   sceneUnload( StringId sceneId );
   Scene* sceneNew( const char* name );
 
   using ComponentFabric = std::function<Component*( Entity* )>;

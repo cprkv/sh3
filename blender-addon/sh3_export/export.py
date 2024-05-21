@@ -114,6 +114,7 @@ def _get_material_info(mat) -> MtMaterialInfo | None:
 
   size: List = [color_node.image.size[0], color_node.image.size[1]]
   path: str = _get_path_info(color_node.image.filepath).relative
+  path = 'upscaled/' + path
   diffuse: MtTextureInfo = {'path': path, 'size': size}
 
   blend_mode: str | None = None
@@ -208,14 +209,17 @@ def _get_collection_objects(collection) -> List[bpy.types.Object] | None:
   return objects
 
 
-def _run_scene_tool(scenes: MtScenesInfo):
+def _run_scene_tool(scenes: MtScenesInfo, use_compression: bool):
   with tempfile.TemporaryFile(delete=False) as file:
     print(f'scenes data stored to: {file.name}')
     try:
       file.write(packb(scenes, use_bin_type=True))
       file.close()
       scene_tool = Path(SH3_PROJECT, _SCENE_TOOL_PATH).as_posix()
-      subprocess.run([scene_tool, file.name], check=True)
+      args = [scene_tool, file.name]
+      if use_compression:
+        args.append("-compress")
+      subprocess.run(args, check=True)
     finally:
       if not _KEEP_DATA:
         Path(file.name).unlink()
@@ -266,13 +270,7 @@ def sh3_run_export(context):
       progress.step()
 
     print('packing...')
-    # scene_path_info: PathInfo = _get_path_info(bpy.data.filepath)
-    # output_path = Path(SH3_GAME_DATA, Path(scene_path_info.relative).with_suffix('.scene.tmp')).as_posix()
-    # print(f'output_path: {output_path}')
-    # with open(output_path, 'wb') as file:
-    #   file.write(packb(scenes, use_bin_type=True))
-    #   progress.step()
-    _run_scene_tool(scenes)
+    _run_scene_tool(scenes, context.scene.sh3_settings.use_compression)
     print('packing done!')
     progress.leave_substeps("finished!")
 

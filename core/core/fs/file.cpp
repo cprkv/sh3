@@ -1,7 +1,57 @@
 #include "core/fs/file.hpp"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdocumentation-unknown-command"
+#include <zstd.h>
+#pragma GCC diagnostic pop
+
 using namespace core;
 using namespace core::fs;
+
+
+#define mFailIfZStd( var, func )                                             \
+  if( ZSTD_isError( var ) )                                                  \
+  {                                                                          \
+    mCoreLogError( "zstd " func " failed: %s\n", ZSTD_getErrorName( var ) ); \
+    return StatusBadFile;                                                    \
+  }
+
+
+namespace
+{
+  Status compress( std::span<const byte> source, std::vector<byte>& output, int compressionLevel )
+  {
+    size_t capacity = ZSTD_compressBound( source.size() );
+    output          = std::vector<byte>( capacity );
+
+    auto resultSize = ZSTD_compress( output.data(), capacity, source.data(), source.size(), compressionLevel );
+    mFailIfZStd( resultSize, "ZSTD_compress" );
+    output.resize( resultSize );
+    return StatusOk;
+  }
+
+  Status decompress( std::span<const byte> encoded, std::vector<byte>& output )
+  {
+    unsigned long long contentSize = ZSTD_getFrameContentSize( encoded.data(), encoded.size() );
+
+    if( contentSize == ZSTD_CONTENTSIZE_ERROR )
+    {
+      mCoreLogError( "not compressed by zstd\n" );
+      return StatusBadFile;
+    }
+
+    if( contentSize == ZSTD_CONTENTSIZE_UNKNOWN )
+    {
+      mCoreLogError( "zstd compression original size unknown\n" );
+      return StatusBadFile;
+    }
+
+    output     = std::vector<byte>( contentSize );
+    size_t err = ZSTD_decompress( output.data(), output.size(), encoded.data(), encoded.size() );
+    mFailIfZStd( err, "ZSTD_decompress" );
+    return StatusOk;
+  }
+} // namespace
 
 
 File::File( const char* path, const char* mode )
@@ -119,6 +169,21 @@ Status File::read( void* buffer, size_t size )
 }
 
 
+Status fs::writeFile( const char* path, std::span<const byte> data )
+{
+  auto f = File{ path, "wb" };
+  return f.write( data.data(), data.size() );
+}
+
+
+Status fs::writeFileCompressed( const char* path, std::span<const byte> data, int compressionLevel )
+{
+  std::vector<byte> encoded;
+  mCoreCheckStatus( compress( data, encoded, compressionLevel ) );
+  return writeFile( path, encoded );
+}
+
+
 Status fs::writeFileJson( const char* path, const Json& data )
 {
   auto indent       = 2;
@@ -141,13 +206,6 @@ Status fs::writeFileJson( const char* path, const Json& data )
 
   auto span = std::span<const byte>( reinterpret_cast<const byte*>( str.c_str() ), str.size() );
   return writeFile( path, span );
-}
-
-
-Status fs::writeFile( const char* path, std::span<const byte> data )
-{
-  auto f = File{ path, "wb" };
-  return f.write( data.data(), data.size() );
 }
 
 
@@ -269,6 +327,32 @@ Status fs::readFileMsgpack( const char* path, msgpack::object& out, msgpack::obj
 
   auto bytes = std::vector<byte>();
   mCoreCheckStatus( fs::readFile( path, bytes ) );
+
+  try
+  {
+    outHandle = msgpack::unpack( reinterpret_cast<const char*>( bytes.data() ), bytes.size() );
+    out       = outHandle.get();
+  }
+  catch( const std::exception& ex )
+  {
+    core::setErrorDetails( "exception while decoding render chunk: %s", ex.what() );
+    return StatusSystemError;
+  }
+
+  return StatusOk;
+}
+
+
+Status fs::readFileMsgpackCompressed( const char* path, msgpack::object& out, msgpack::object_handle& outHandle )
+{
+  mCoreLog( "loading msgpack at %s\n", path );
+  auto bytes = std::vector<byte>();
+
+  {
+    auto encoded = std::vector<byte>();
+    mCoreCheckStatus( fs::readFile( path, encoded ) );
+    mCoreCheckStatus( decompress( encoded, bytes ) );
+  }
 
   try
   {

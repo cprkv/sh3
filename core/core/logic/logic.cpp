@@ -44,10 +44,10 @@ namespace
     }
   }
 
-  void loadSceneAsync( const std::string& name, SceneInfo* scene )
+  void loadSceneAsync( StringId sceneId, SceneInfo* scene )
   {
     scene->isLoading   = true;
-    auto sceneJsonPath = data::getDataPath( ( name + ".scene.json" ).c_str() );
+    auto sceneJsonPath = data::getDataPath( StringId( sceneId, ".scene.json" ) );
 
     system::task::ctiAsync( [sceneJsonPath]() -> std::expected<data::ShSceneInfo, Status> {
       return utils::turnIntoExpected( data::readJsonFile, sceneJsonPath );
@@ -102,9 +102,9 @@ void logic::update()
   }
 }
 
-void logic::sceneLoad( const char* name )
+void logic::sceneLoad( StringId sceneId )
 {
-  auto sceneId = StringId( name );
+  mCoreLog( "loading scene " mFmtStringHash "\n", sceneId.getHash() );
 
   auto it = std::ranges::find_if( sData->scenes, [=]( SceneInfo& scene ) {
     return scene.scene.getId() == sceneId;
@@ -118,13 +118,11 @@ void logic::sceneLoad( const char* name )
   mCoreLog( "loading scene " mFmtStringHash "...\n", sceneId.getHash() );
   auto* scene = &sData->scenes.emplace_back( Scene( sceneId ) );
 
-  loadSceneAsync( name, scene );
+  loadSceneAsync( sceneId, scene );
 }
 
-void logic::sceneUnload( const char* name )
+void logic::sceneUnload( StringId sceneId )
 {
-  auto sceneId = StringId( name );
-
   core::system::task::runDeffered( [sceneId]() {
     auto it = std::ranges::find_if( sData->scenes, [=]( SceneInfo& scene ) {
       return scene.scene.getId() == sceneId;

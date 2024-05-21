@@ -37,7 +37,13 @@ namespace
   void convertToDds( TmpTexture& texture )
   {
     auto fullPath = getResourcePath( texture.info.path );
-    mFailIf( !stdfs::exists( fullPath ) );
+
+    if( !stdfs::exists( fullPath ) )
+    {
+      printf( "not found: %s\n", fullPath.string().c_str() );
+      abort();
+    }
+
     mFailIf( !stdfs::is_regular_file( fullPath ) );
 
     printf( "texture (%s):\n  %s ->\n  %s\n", core::render::toString( texture.blendMode ),

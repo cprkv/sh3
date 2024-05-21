@@ -3,33 +3,6 @@
 using namespace game;
 
 
-namespace
-{
-  std::array sScenes = {
-      "maps/mall-real/mall-real-split/mr11",
-      "maps/mall-real/mall-real-split/mr12",
-      "maps/mall-real/mall-real-split/mr1e",
-      "maps/mall-real/mall-real-split/mr1f",
-      "maps/mall-real/mall-real-split/mr21",
-      "maps/mall-real/mall-real-split/mr22",
-      "maps/mall-real/mall-real-split/mr2e",
-      "maps/mall-real/mall-real-split/mr2f",
-      "maps/mall-real/mall-real-split/mrd1",
-      "maps/mall-real/mall-real-split/mrdf",
-      "maps/mall-real/mall-real-split/mre1",
-      "maps/mall-real/mall-real-split/mree",
-      "maps/mall-real/mall-real-split/mref",
-      "maps/mall-real/mall-real-split/mrf1",
-      "maps/mall-real/mall-real-split/mrf2",
-      "maps/mall-real/mall-real-split/mrfd",
-      "maps/mall-real/mall-real-split/mrfe",
-      "maps/mall-real/mall-real-split/mrff",
-  };
-
-  int sCurrentScene = 0;
-} // namespace
-
-
 void FreeFlyCameraComponent::init()
 {
   transform = getComponent<core::logic::TransformComponent>();
@@ -107,31 +80,6 @@ void FreeFlyCameraComponent::update( const core::system::DeltaTime& )
 }
 
 
-void RemoveSceneComponent::update( const core::system::DeltaTime& )
-{
-  using namespace core::input;
-
-  auto modulo = []( int a, int b ) -> int {
-    const int result = a % b;
-    return result >= 0 ? result : result + b;
-  };
-
-  if( isKeyDown( Key1 ) )
-  {
-    core::logic::sceneUnload( sScenes[static_cast<size_t>( sCurrentScene )] );
-    sCurrentScene = modulo( sCurrentScene - 1, static_cast<int>( sScenes.size() ) );
-    core::logic::sceneLoad( sScenes[static_cast<size_t>( sCurrentScene )] );
-  }
-
-  if( isKeyDown( Key0 ) )
-  {
-    core::logic::sceneUnload( sScenes[static_cast<size_t>( sCurrentScene )] );
-    sCurrentScene = modulo( sCurrentScene + 1, static_cast<int>( sScenes.size() ) );
-    core::logic::sceneLoad( sScenes[static_cast<size_t>( sCurrentScene )] );
-  }
-}
-
-
 void ScenePortalComponent::init()
 {
   // NOTE: assuming that this component doesn't move
@@ -150,22 +98,26 @@ void ScenePortalComponent::update( const core::system::DeltaTime& dt )
 {
   ( void ) dt;
 
-  //constexpr auto color = Vec4( 0.5, 0, 0, 0.01f );
   bb.debugDraw();
 
-  // TODO: temporary (not works, need load scene to take stringid as param)
-  // using namespace core::input;
-  // if( isKeyDown( Key0 ) )
-  // {
-  //   core::logic::sceneUnload( sScenes[static_cast<size_t>( sCurrentScene )] );
-  //   core::logic::sceneLoad( sScenes[static_cast<size_t>( sCurrentScene )] );
-  // }
+  for( auto it = getEntity()->getScene()->entitiesIteratorBegin();
+       it != getEntity()->getScene()->entitiesIteratorEnd();
+       ++it )
+  {
+    if( auto* camera = it->tryGetComponent<FreeFlyCameraComponent>() )
+    {
+      if( bb.isInside( camera->transform->props.position ) )
+      {
+        core::logic::sceneUnload( getEntity()->getScene()->getId() );
+        core::logic::sceneLoad( props.toSceneId );
+      }
+    }
+  }
 }
 
 
 void game::registerComponents()
 {
   core::logic::componentRegister<FreeFlyCameraComponent>();
-  core::logic::componentRegister<RemoveSceneComponent>();
   core::logic::componentRegister<ScenePortalComponent>();
 }

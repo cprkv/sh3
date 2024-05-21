@@ -25,20 +25,6 @@ namespace game
   };
 
 
-  struct RemoveSceneComponent : public core::Component
-  {
-    struct Props
-    {
-      friend void to_json( Json&, const Props& ) {}
-      friend void from_json( const Json&, Props& ) {}
-    };
-
-    mCoreComponent( RemoveSceneComponent );
-
-    void update( const core::system::DeltaTime& ) override;
-  };
-
-
   class ScenePortalComponent : public core::Component
   {
   public:

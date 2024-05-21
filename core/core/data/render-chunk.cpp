@@ -50,7 +50,7 @@ namespace
       auto objHandle = msgpack::object_handle();
       auto obj       = msgpack::object();
 
-      if( auto s = fs::readFileMsgpack( path.c_str(), obj, objHandle ); s != StatusOk )
+      if( auto s = fs::readFileMsgpackCompressed( path.c_str(), obj, objHandle ); s != StatusOk )
         return std::unexpected( s );
 
       try

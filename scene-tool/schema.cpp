@@ -29,8 +29,8 @@ const msgpack::object& msgpack::adaptor::convert<Vec2s>::operator()(
   return o;
 }
 
-msgpack::packer<FileWriter>& msgpack::adaptor::pack<Vec2s>::operator()(
-    msgpack::packer<FileWriter>& o, const Vec2s& v ) const
+msgpack::packer<MsgPackWriter>& msgpack::adaptor::pack<Vec2s>::operator()(
+    msgpack::packer<MsgPackWriter>& o, const Vec2s& v ) const
 {
   o.pack_array( 2 );
   o.pack( v.x );
@@ -50,8 +50,8 @@ const msgpack::object& msgpack::adaptor::convert<Vec3>::operator()(
   return o;
 }
 
-msgpack::packer<intermediate::FileWriter>& msgpack::adaptor::pack<Vec3>::operator()(
-    msgpack::packer<intermediate::FileWriter>& o, const Vec3& v ) const
+msgpack::packer<intermediate::MsgPackWriter>& msgpack::adaptor::pack<Vec3>::operator()(
+    msgpack::packer<intermediate::MsgPackWriter>& o, const Vec3& v ) const
 {
   o.pack_array( 3 );
   o.pack( v.x );
@@ -73,8 +73,8 @@ const msgpack::object& msgpack::adaptor::convert<Vec4>::operator()(
   return o;
 }
 
-msgpack::packer<intermediate::FileWriter>& msgpack::adaptor::pack<Vec4>::operator()(
-    msgpack::packer<intermediate::FileWriter>& o, const Vec4& v ) const
+msgpack::packer<intermediate::MsgPackWriter>& msgpack::adaptor::pack<Vec4>::operator()(
+    msgpack::packer<intermediate::MsgPackWriter>& o, const Vec4& v ) const
 {
   o.pack_array( 4 );
   o.pack( v.x );
@@ -98,8 +98,8 @@ const msgpack::object& msgpack::adaptor::convert<Quat>::operator()(
   return o;
 }
 
-msgpack::packer<intermediate::FileWriter>& msgpack::adaptor::pack<Quat>::operator()(
-    msgpack::packer<intermediate::FileWriter>& o, const Quat& v ) const
+msgpack::packer<intermediate::MsgPackWriter>& msgpack::adaptor::pack<Quat>::operator()(
+    msgpack::packer<intermediate::MsgPackWriter>& o, const Quat& v ) const
 {
   o.pack_array( 4 );
   o.pack( v.x );

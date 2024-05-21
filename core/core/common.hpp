@@ -578,15 +578,14 @@ using StringHash = u64;
 
 namespace details
 {
-  constexpr StringHash stringIdHash( const char* str, size_t length )
-  {
-    constexpr StringHash sStringIdHashBasis = 14695981039346656037ull;
-    constexpr StringHash sStringIdHashPrime = 1099511628211ull;
+  inline constexpr StringHash gStringIdHashPrime = 1099511628211ull;
 
-    StringHash hash = sStringIdHashBasis;
+  constexpr StringHash stringIdHash( const char* str, size_t length, StringHash basis = 14695981039346656037ull )
+  {
+    StringHash hash = basis;
 
     for( size_t i = 0; i < length; ++i )
-      hash = ( hash ^ str[i] ) * sStringIdHashPrime;
+      hash = ( hash ^ str[i] ) * gStringIdHashPrime;
 
     return hash;
   }
@@ -606,12 +605,12 @@ public:
       : hash_{ hash }
   {}
 
-  StringId( const char* str )
-      : hash_{ details::stringIdHash( str, strlen( str ) ) }
-  {}
-
   constexpr StringId( std::string_view string )
       : hash_{ details::stringIdHash( string.data(), string.length() ) }
+  {}
+
+  constexpr StringId( StringId before, std::string_view string )
+      : hash_{ details::stringIdHash( string.data(), string.length(), before.hash_ ) }
   {}
 
   constexpr StringHash getHash() const { return hash_; }
@@ -620,19 +619,15 @@ public:
 
   struct Hash
   {
-    size_t operator()( const StringId& s ) const noexcept
-    {
-      return s.getHash();
-    }
+    size_t operator()( const StringId& s ) const noexcept { return s.getHash(); }
   };
 
   struct EqualTo
   {
-    bool operator()( const StringId& a, const StringId& b ) const noexcept
-    {
-      return a.getHash() == b.getHash();
-    }
+    bool operator()( const StringId& a, const StringId& b ) const noexcept { return a.getHash() == b.getHash(); }
   };
+
+  constexpr StringId operator+( std::string_view string ) const { return StringId( *this, string ); }
 
   friend constexpr auto operator<=>( const StringId&, const StringId& ) = default;
 };

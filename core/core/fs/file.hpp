@@ -46,6 +46,8 @@ namespace core::fs
 
   Status        writeFile( const char* path, std::span<const byte> data );
   inline Status writeFile( const std::string& path, std::span<const byte> data ) { return writeFile( path.c_str(), data ); }
+  Status        writeFileCompressed( const char* path, std::span<const byte> data, int compressionLevel = 6 );
+  inline Status writeFileCompressed( const std::string& path, std::span<const byte> data, int compressionLevel = 6 ) { return writeFileCompressed( path.c_str(), data, compressionLevel ); }
   Status        writeFileJson( const char* path, const Json& data );
   inline Status writeFileJson( const std::string& path, const Json& data ) { return writeFileJson( path.c_str(), data ); }
   Status        readFile( const char* path, std::vector<byte>& out );
@@ -54,6 +56,8 @@ namespace core::fs
   inline Status readFileJson( const std::string& path, Json& out ) { return readFileJson( path.c_str(), out ); }
   Status        readFileMsgpack( const char* path, msgpack::object& out, msgpack::object_handle& outHandle );
   inline Status readFileMsgpack( const std::string& path, msgpack::object& out, msgpack::object_handle& outHandle ) { return readFileMsgpack( path.c_str(), out, outHandle ); }
+  Status        readFileMsgpackCompressed( const char* path, msgpack::object& out, msgpack::object_handle& outHandle );
+  inline Status readFileMsgpackCompressed( const std::string& path, msgpack::object& out, msgpack::object_handle& outHandle ) { return readFileMsgpackCompressed( path.c_str(), out, outHandle ); }
 
   Status        getEntryInfo( const stdfs::path& path, EntryInfo& out ); // returns: StatusOk / StatusSystemError / StatusNotFound
   inline Status getEntryInfo( const char* path, EntryInfo& out ) { return getEntryInfo( stdfs::path( path ), out ); }

@@ -41,7 +41,18 @@ namespace
     {
       scene.getEntity( "mrff-camera" )
           .addComponent( meta::automatic::freeFlyCamera );
+
+      scene.getEntity( "mrff-portal-mree" )
+          .addComponent<game::ScenePortalComponent>( {
+              .toSceneId = StringId( "maps/mall-real/mall-real-split/mree" ),
+          } );
     }
+    else if( name == "maps/mall-real/mall-real-split/mree" )
+    {
+      scene.getEntity( "mree-camera" )
+          .addComponent( meta::automatic::freeFlyCamera );
+    }
+
 
     postprocessDefault( scene );
   }

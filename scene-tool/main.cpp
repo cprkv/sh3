@@ -20,14 +20,19 @@ namespace
 
 
   void writeRenderChunk( const intermediate::SceneInfo&   sceneInfo,
-                         const core::data::schema::Chunk& renderChunk )
+                         const core::data::schema::Chunk& renderChunk,
+                         bool                             useCompression )
   {
     auto outputPath = stdfs::path( core::data::getDataPath( sceneInfo.name + ".chunk" ) );
     stdfs::create_directories( outputPath.parent_path() );
-    auto outputFile = intermediate::FileWriter( outputPath.string().c_str() );
-    mFailIf( outputFile.hasError );
-    printf( "writing render chunk %s...\n", outputPath.string().c_str() );
-    msgpack::pack( outputFile, renderChunk );
+
+    auto memoryWriter = intermediate::VectorWriter();
+    printf( "serializing render chunk...\n" );
+    msgpack::pack( memoryWriter, renderChunk );
+
+    int compressionLevel = useCompression ? 6 : 1;
+    printf( "writing render chunk %s (compression: %d)...\n", outputPath.string().c_str(), compressionLevel );
+    mFailIf( core::fs::writeFileCompressed( outputPath.string(), memoryWriter.bytes, compressionLevel ) != StatusOk );
     printf( "render chunk written\n" );
   }
 
@@ -43,7 +48,7 @@ namespace
   }
 
 
-  void runSceneTool( const char* path )
+  void runSceneTool( const char* path, bool useCompression )
   {
     auto scenesInfo = readSceneInput( path );
     printf( "mesh tool parsed input file...\n" );
@@ -71,7 +76,7 @@ namespace
           intermediate::processMesh( object.name, mesh, chunk );
         }
         textures->resolve( sceneInfo, chunk );
-        writeRenderChunk( sceneInfo, chunk );
+        writeRenderChunk( sceneInfo, chunk, useCompression );
       }
 
       // handle scene
@@ -98,13 +103,17 @@ try
     return 1;
   }
 
-  if( argc != 2 )
+  if( argc != 2 && argc != 3 )
   {
     printf( "usage: scene-tool.exe [path-to-temp-scene]\n" );
     return 1;
   }
 
-  runSceneTool( argv[1] );
+  bool useCompression = false;
+  if( argc == 3 && argv[2] == std::string_view( "-compress" ) )
+    useCompression = true;
+
+  runSceneTool( argv[1], useCompression );
 
   core::data::destroy();
   printf( "scene tool ended\n" );
